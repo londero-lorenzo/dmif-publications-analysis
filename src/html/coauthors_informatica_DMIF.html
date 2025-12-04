@@ -1,0 +1,163 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script src="lib/bindings/utils.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 750px;
+                 background-color: #ffffff;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"group": 0, "id": "Maddalena Eddy", "label": "Maddalena Eddy", "shape": "dot", "title": "Maddalena Eddy\u003cbr\u003eDegree: 0.086\u003cbr\u003eBetweenness: 0.000", "value": 3.428571428571429}, {"group": 0, "id": "Mizzaro Stefano", "label": "Mizzaro Stefano", "shape": "dot", "title": "Mizzaro Stefano\u003cbr\u003eDegree: 0.229\u003cbr\u003eBetweenness: 0.114", "value": 9.142857142857142}, {"group": 0, "id": "Roitero Kevin", "label": "Roitero Kevin", "shape": "dot", "title": "Roitero Kevin\u003cbr\u003eDegree: 0.143\u003cbr\u003eBetweenness: 0.013", "value": 5.7142857142857135}, {"group": 0, "id": "Coppola Paolo", "label": "Coppola Paolo", "shape": "dot", "title": "Coppola Paolo\u003cbr\u003eDegree: 0.143\u003cbr\u003eBetweenness: 0.027", "value": 5.7142857142857135}, {"group": 0, "id": "Della Mea Vincenzo", "label": "Della Mea Vincenzo", "shape": "dot", "title": "Della Mea Vincenzo\u003cbr\u003eDegree: 0.171\u003cbr\u003eBetweenness: 0.060", "value": 6.857142857142858}, {"group": 1, "id": "Lenisa Marina", "label": "Lenisa Marina", "shape": "dot", "title": "Lenisa Marina\u003cbr\u003eDegree: 0.086\u003cbr\u003eBetweenness: 0.000", "value": 3.428571428571429}, {"group": 1, "id": "Scagnetto Ivan", "label": "Scagnetto Ivan", "shape": "dot", "title": "Scagnetto Ivan\u003cbr\u003eDegree: 0.229\u003cbr\u003eBetweenness: 0.218", "value": 9.142857142857142}, {"group": 2, "id": "Geatti Luca", "label": "Geatti Luca", "shape": "dot", "title": "Geatti Luca\u003cbr\u003eDegree: 0.143\u003cbr\u003eBetweenness: 0.104", "value": 5.7142857142857135}, {"group": 2, "id": "Montanari Angelo", "label": "Montanari Angelo", "shape": "dot", "title": "Montanari Angelo\u003cbr\u003eDegree: 0.286\u003cbr\u003eBetweenness: 0.289", "value": 11.428571428571427}, {"group": 3, "id": "Buttussi Fabio", "label": "Buttussi Fabio", "shape": "dot", "title": "Buttussi Fabio\u003cbr\u003eDegree: 0.029\u003cbr\u003eBetweenness: 0.000", "value": 1.1428571428571428}, {"group": 3, "id": "Chittaro Luca", "label": "Chittaro Luca", "shape": "dot", "title": "Chittaro Luca\u003cbr\u003eDegree: 0.171\u003cbr\u003eBetweenness: 0.209", "value": 6.857142857142858}, {"group": 4, "id": "Bozzo Enrico", "label": "Bozzo Enrico", "shape": "dot", "title": "Bozzo Enrico\u003cbr\u003eDegree: 0.057\u003cbr\u003eBetweenness: 0.008", "value": 2.2857142857142856}, {"group": 4, "id": "Fontana Federico", "label": "Fontana Federico", "shape": "dot", "title": "Fontana Federico\u003cbr\u003eDegree: 0.057\u003cbr\u003eBetweenness: 0.003", "value": 2.2857142857142856}, {"group": 5, "id": "Dovier Agostino", "label": "Dovier Agostino", "shape": "dot", "title": "Dovier Agostino\u003cbr\u003eDegree: 0.171\u003cbr\u003eBetweenness: 0.097", "value": 6.857142857142858}, {"group": 5, "id": "Formisano Andrea", "label": "Formisano Andrea", "shape": "dot", "title": "Formisano Andrea\u003cbr\u003eDegree: 0.057\u003cbr\u003eBetweenness: 0.000", "value": 2.2857142857142856}, {"group": 2, "id": "Della Monica Dario", "label": "Della Monica Dario", "shape": "dot", "title": "Della Monica Dario\u003cbr\u003eDegree: 0.086\u003cbr\u003eBetweenness: 0.009", "value": 3.428571428571429}, {"group": 2, "id": "Puppis Gabriele", "label": "Puppis Gabriele", "shape": "dot", "title": "Puppis Gabriele\u003cbr\u003eDegree: 0.086\u003cbr\u003eBetweenness: 0.049", "value": 3.428571428571429}, {"group": 1, "id": "Miculan Marino", "label": "Miculan Marino", "shape": "dot", "title": "Miculan Marino\u003cbr\u003eDegree: 0.171\u003cbr\u003eBetweenness: 0.161", "value": 6.857142857142858}, {"group": 1, "id": "Riccio Vincenzo", "label": "Riccio Vincenzo", "shape": "dot", "title": "Riccio Vincenzo\u003cbr\u003eDegree: 0.029\u003cbr\u003eBetweenness: 0.000", "value": 1.1428571428571428}, {"group": 1, "id": "Comini Marco", "label": "Comini Marco", "shape": "dot", "title": "Comini Marco\u003cbr\u003eDegree: 0.029\u003cbr\u003eBetweenness: 0.000", "value": 1.1428571428571428}, {"group": 5, "id": "Piazza Carla", "label": "Piazza Carla", "shape": "dot", "title": "Piazza Carla\u003cbr\u003eDegree: 0.171\u003cbr\u003eBetweenness: 0.140", "value": 6.857142857142858}, {"group": 0, "id": "Serra Giuseppe", "label": "Serra Giuseppe", "shape": "dot", "title": "Serra Giuseppe\u003cbr\u003eDegree: 0.200\u003cbr\u003eBetweenness: 0.274", "value": 7.999999999999999}, {"group": 2, "id": "Cimatti Alessandro", "label": "Cimatti Alessandro", "shape": "dot", "title": "Cimatti Alessandro\u003cbr\u003eDegree: 0.086\u003cbr\u003eBetweenness: 0.005", "value": 3.428571428571429}, {"group": 5, "id": "Policriti Alberto", "label": "Policriti Alberto", "shape": "dot", "title": "Policriti Alberto\u003cbr\u003eDegree: 0.171\u003cbr\u003eBetweenness: 0.056", "value": 6.857142857142858}, {"group": 5, "id": "Fogolari Federico", "label": "Fogolari Federico", "shape": "dot", "title": "Fogolari Federico\u003cbr\u003eDegree: 0.086\u003cbr\u003eBetweenness: 0.065", "value": 3.428571428571429}, {"group": 1, "id": "Drioli Carlo", "label": "Drioli Carlo", "shape": "dot", "title": "Drioli Carlo\u003cbr\u003eDegree: 0.029\u003cbr\u003eBetweenness: 0.000", "value": 1.1428571428571428}, {"group": 1, "id": "Di Gianantonio Pietro", "label": "Di Gianantonio Pietro", "shape": "dot", "title": "Di Gianantonio Pietro\u003cbr\u003eDegree: 0.086\u003cbr\u003eBetweenness: 0.000", "value": 3.428571428571429}, {"group": 0, "id": "Brajnik Giorgio", "label": "Brajnik Giorgio", "shape": "dot", "title": "Brajnik Giorgio\u003cbr\u003eDegree: 0.086\u003cbr\u003eBetweenness: 0.031", "value": 3.428571428571429}, {"group": 6, "id": "Micheloni Christian", "label": "Micheloni Christian", "shape": "dot", "title": "Micheloni Christian\u003cbr\u003eDegree: 0.057\u003cbr\u003eBetweenness: 0.111", "value": 2.2857142857142856}, {"group": 3, "id": "Burigat Stefano", "label": "Burigat Stefano", "shape": "dot", "title": "Burigat Stefano\u003cbr\u003eDegree: 0.029\u003cbr\u003eBetweenness: 0.000", "value": 1.1428571428571428}, {"group": 2, "id": "Franceschet Massimo", "label": "Franceschet Massimo", "shape": "dot", "title": "Franceschet Massimo\u003cbr\u003eDegree: 0.086\u003cbr\u003eBetweenness: 0.059", "value": 3.428571428571429}, {"group": 5, "id": "Fortuna Sara", "label": "Fortuna Sara", "shape": "dot", "title": "Fortuna Sara\u003cbr\u003eDegree: 0.029\u003cbr\u003eBetweenness: 0.000", "value": 1.1428571428571428}, {"group": 6, "id": "Omero Paolo", "label": "Omero Paolo", "shape": "dot", "title": "Omero Paolo\u003cbr\u003eDegree: 0.057\u003cbr\u003eBetweenness: 0.057", "value": 2.2857142857142856}, {"group": 6, "id": "Dattolo Antonina", "label": "Dattolo Antonina", "shape": "dot", "title": "Dattolo Antonina\u003cbr\u003eDegree: 0.029\u003cbr\u003eBetweenness: 0.000", "value": 1.1428571428571428}, {"group": 5, "id": "Fusiello Andrea", "label": "Fusiello Andrea", "shape": "dot", "title": "Fusiello Andrea\u003cbr\u003eDegree: 0.057\u003cbr\u003eBetweenness: 0.018", "value": 2.2857142857142856}, {"group": 5, "id": "D\u2019Agostino Giovanna", "label": "D\u2019Agostino Giovanna", "shape": "dot", "title": "D\u2019Agostino Giovanna\u003cbr\u003eDegree: 0.057\u003cbr\u003eBetweenness: 0.000", "value": 2.2857142857142856}]);
+                  edges = new vis.DataSet([{"from": "Maddalena Eddy", "to": "Mizzaro Stefano", "value": 20}, {"from": "Maddalena Eddy", "to": "Roitero Kevin", "value": 13}, {"from": "Maddalena Eddy", "to": "Della Mea Vincenzo", "value": 3}, {"from": "Mizzaro Stefano", "to": "Roitero Kevin", "value": 50}, {"from": "Mizzaro Stefano", "to": "Coppola Paolo", "value": 8}, {"from": "Mizzaro Stefano", "to": "Della Mea Vincenzo", "value": 20}, {"from": "Mizzaro Stefano", "to": "Serra Giuseppe", "value": 7}, {"from": "Mizzaro Stefano", "to": "Scagnetto Ivan", "value": 19}, {"from": "Mizzaro Stefano", "to": "Fusiello Andrea", "value": 1}, {"from": "Mizzaro Stefano", "to": "Brajnik Giorgio", "value": 2}, {"from": "Roitero Kevin", "to": "Coppola Paolo", "value": 1}, {"from": "Roitero Kevin", "to": "Della Mea Vincenzo", "value": 16}, {"from": "Roitero Kevin", "to": "Serra Giuseppe", "value": 6}, {"from": "Coppola Paolo", "to": "Della Mea Vincenzo", "value": 6}, {"from": "Coppola Paolo", "to": "Scagnetto Ivan", "value": 4}, {"from": "Coppola Paolo", "to": "Chittaro Luca", "value": 1}, {"from": "Della Mea Vincenzo", "to": "Serra Giuseppe", "value": 3}, {"from": "Della Mea Vincenzo", "to": "Scagnetto Ivan", "value": 4}, {"from": "Lenisa Marina", "to": "Scagnetto Ivan", "value": 9}, {"from": "Lenisa Marina", "to": "Di Gianantonio Pietro", "value": 9}, {"from": "Lenisa Marina", "to": "Miculan Marino", "value": 2}, {"from": "Scagnetto Ivan", "to": "Drioli Carlo", "value": 1}, {"from": "Scagnetto Ivan", "to": "Di Gianantonio Pietro", "value": 2}, {"from": "Scagnetto Ivan", "to": "Miculan Marino", "value": 6}, {"from": "Scagnetto Ivan", "to": "Chittaro Luca", "value": 1}, {"from": "Geatti Luca", "to": "Montanari Angelo", "value": 27}, {"from": "Geatti Luca", "to": "Cimatti Alessandro", "value": 9}, {"from": "Geatti Luca", "to": "Della Monica Dario", "value": 1}, {"from": "Geatti Luca", "to": "Policriti Alberto", "value": 2}, {"from": "Geatti Luca", "to": "Miculan Marino", "value": 1}, {"from": "Montanari Angelo", "to": "Cimatti Alessandro", "value": 8}, {"from": "Montanari Angelo", "to": "Della Monica Dario", "value": 37}, {"from": "Montanari Angelo", "to": "Puppis Gabriele", "value": 12}, {"from": "Montanari Angelo", "to": "Dovier Agostino", "value": 2}, {"from": "Montanari Angelo", "to": "Franceschet Massimo", "value": 10}, {"from": "Montanari Angelo", "to": "Piazza Carla", "value": 4}, {"from": "Montanari Angelo", "to": "Policriti Alberto", "value": 9}, {"from": "Montanari Angelo", "to": "Chittaro Luca", "value": 5}, {"from": "Montanari Angelo", "to": "D\u2019Agostino Giovanna", "value": 1}, {"from": "Buttussi Fabio", "to": "Chittaro Luca", "value": 27}, {"from": "Chittaro Luca", "to": "Burigat Stefano", "value": 20}, {"from": "Chittaro Luca", "to": "Brajnik Giorgio", "value": 1}, {"from": "Bozzo Enrico", "to": "Fontana Federico", "value": 7}, {"from": "Bozzo Enrico", "to": "Franceschet Massimo", "value": 1}, {"from": "Fontana Federico", "to": "Puppis Gabriele", "value": 1}, {"from": "Dovier Agostino", "to": "Formisano Andrea", "value": 37}, {"from": "Dovier Agostino", "to": "Fogolari Federico", "value": 9}, {"from": "Dovier Agostino", "to": "Policriti Alberto", "value": 8}, {"from": "Dovier Agostino", "to": "Piazza Carla", "value": 10}, {"from": "Dovier Agostino", "to": "Fusiello Andrea", "value": 1}, {"from": "Formisano Andrea", "to": "Policriti Alberto", "value": 3}, {"from": "Della Monica Dario", "to": "Puppis Gabriele", "value": 2}, {"from": "Miculan Marino", "to": "Riccio Vincenzo", "value": 2}, {"from": "Miculan Marino", "to": "Comini Marco", "value": 1}, {"from": "Miculan Marino", "to": "Di Gianantonio Pietro", "value": 4}, {"from": "Piazza Carla", "to": "Serra Giuseppe", "value": 1}, {"from": "Piazza Carla", "to": "Policriti Alberto", "value": 23}, {"from": "Piazza Carla", "to": "Cimatti Alessandro", "value": 1}, {"from": "Piazza Carla", "to": "Franceschet Massimo", "value": 3}, {"from": "Serra Giuseppe", "to": "Brajnik Giorgio", "value": 3}, {"from": "Serra Giuseppe", "to": "Fogolari Federico", "value": 1}, {"from": "Serra Giuseppe", "to": "Micheloni Christian", "value": 1}, {"from": "Policriti Alberto", "to": "D\u2019Agostino Giovanna", "value": 1}, {"from": "Fogolari Federico", "to": "Fortuna Sara", "value": 1}, {"from": "Micheloni Christian", "to": "Omero Paolo", "value": 1}, {"from": "Omero Paolo", "to": "Dattolo Antonina", "value": 1}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": false
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "barnesHut": {
+            "avoidOverlap": 0,
+            "centralGravity": 0.3,
+            "damping": 0.09,
+            "gravitationalConstant": -80000,
+            "springConstant": 0.001,
+            "springLength": 250
+        },
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>
