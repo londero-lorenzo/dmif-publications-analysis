@@ -2,10 +2,207 @@
     <head>
         <meta charset="utf-8">
         
-            <script src="lib/bindings/utils.js"></script>
+            <script>function neighbourhoodHighlight(params) {
+  // console.log("in nieghbourhoodhighlight");
+  allNodes = nodes.get({ returnType: "Object" });
+  // originalNodes = JSON.parse(JSON.stringify(allNodes));
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    highlightActive = true;
+    var i, j;
+    var selectedNode = params.nodes[0];
+    var degrees = 2;
+
+    // mark all nodes as hard to read.
+    for (let nodeId in allNodes) {
+      // nodeColors[nodeId] = allNodes[nodeId].color;
+      allNodes[nodeId].color = "rgba(200,200,200,0.5)";
+      if (allNodes[nodeId].hiddenLabel === undefined) {
+        allNodes[nodeId].hiddenLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+    var connectedNodes = network.getConnectedNodes(selectedNode);
+    var allConnectedNodes = [];
+
+    // get the second degree nodes
+    for (i = 1; i < degrees; i++) {
+      for (j = 0; j < connectedNodes.length; j++) {
+        allConnectedNodes = allConnectedNodes.concat(
+          network.getConnectedNodes(connectedNodes[j])
+        );
+      }
+    }
+
+    // all second degree nodes get a different color and their label back
+    for (i = 0; i < allConnectedNodes.length; i++) {
+      // allNodes[allConnectedNodes[i]].color = "pink";
+      allNodes[allConnectedNodes[i]].color = "rgba(150,150,150,0.75)";
+      if (allNodes[allConnectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[allConnectedNodes[i]].label =
+          allNodes[allConnectedNodes[i]].hiddenLabel;
+        allNodes[allConnectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // all first degree nodes get their own color and their label back
+    for (i = 0; i < connectedNodes.length; i++) {
+      // allNodes[connectedNodes[i]].color = undefined;
+      allNodes[connectedNodes[i]].color = nodeColors[connectedNodes[i]];
+      if (allNodes[connectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[connectedNodes[i]].label =
+          allNodes[connectedNodes[i]].hiddenLabel;
+        allNodes[connectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // the main node gets its own color and its label back.
+    // allNodes[selectedNode].color = undefined;
+    allNodes[selectedNode].color = nodeColors[selectedNode];
+    if (allNodes[selectedNode].hiddenLabel !== undefined) {
+      allNodes[selectedNode].label = allNodes[selectedNode].hiddenLabel;
+      allNodes[selectedNode].hiddenLabel = undefined;
+    }
+  } else if (highlightActive === true) {
+    // console.log("highlightActive was true");
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      // allNodes[nodeId].color = "purple";
+      allNodes[nodeId].color = nodeColors[nodeId];
+      // delete allNodes[nodeId].color;
+      if (allNodes[nodeId].hiddenLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].hiddenLabel;
+        allNodes[nodeId].hiddenLabel = undefined;
+      }
+    }
+    highlightActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    // console.log("Nothing was selected");
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        // allNodes[nodeId].color = {};
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function filterHighlight(params) {
+  allNodes = nodes.get({ returnType: "Object" });
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    filterActive = true;
+    let selectedNodes = params.nodes;
+
+    // hiding all nodes and saving the label
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = true;
+      if (allNodes[nodeId].savedLabel === undefined) {
+        allNodes[nodeId].savedLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+
+    for (let i=0; i < selectedNodes.length; i++) {
+      allNodes[selectedNodes[i]].hidden = false;
+      if (allNodes[selectedNodes[i]].savedLabel !== undefined) {
+        allNodes[selectedNodes[i]].label = allNodes[selectedNodes[i]].savedLabel;
+        allNodes[selectedNodes[i]].savedLabel = undefined;
+      }
+    }
+
+  } else if (filterActive === true) {
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = false;
+      if (allNodes[nodeId].savedLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].savedLabel;
+        allNodes[nodeId].savedLabel = undefined;
+      }
+    }
+    filterActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function selectNode(nodes) {
+  network.selectNodes(nodes);
+  neighbourhoodHighlight({ nodes: nodes });
+  return nodes;
+}
+
+function selectNodes(nodes) {
+  network.selectNodes(nodes);
+  filterHighlight({nodes: nodes});
+  return nodes;
+}
+
+function highlightFilter(filter) {
+  let selectedNodes = []
+  let selectedProp = filter['property']
+  if (filter['item'] === 'node') {
+    let allNodes = nodes.get({ returnType: "Object" });
+    for (let nodeId in allNodes) {
+      if (allNodes[nodeId][selectedProp] && filter['value'].includes((allNodes[nodeId][selectedProp]).toString())) {
+        selectedNodes.push(nodeId)
+      }
+    }
+  }
+  else if (filter['item'] === 'edge'){
+    let allEdges = edges.get({returnType: 'object'});
+    // check if the selected property exists for selected edge and select the nodes connected to the edge
+    for (let edge in allEdges) {
+      if (allEdges[edge][selectedProp] && filter['value'].includes((allEdges[edge][selectedProp]).toString())) {
+        selectedNodes.push(allEdges[edge]['from'])
+        selectedNodes.push(allEdges[edge]['to'])
+      }
+    }
+  }
+  selectNodes(selectedNodes)
+}</script>
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
             <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
             
+            
+            
+            
+            
+            
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.0.0-rc.4/css/tom-select.min.css" integrity="sha512-43fHB3GLgZfz8QXl1RPQ8O66oIgv3po9cJ5erMt1c4QISq9dYb195T3vr5ImnJPXuVroKcGBPXBFKETW8jrPNQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.0.0-rc.4/js/tom-select.complete.js" integrity="sha512-jeF9CfnvzDiw9G9xiksVjxR2lib44Gnovvkv+3CgCG6NXCD4gqlA5nDAVW5WjpA+i+/zKsUWV5xNEbW1X/HH0Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+
         
 <center>
 <h1></h1>
@@ -52,6 +249,140 @@
     <body>
         <div class="card" style="width: 100%">
             
+                <div id="select-menu" class="card-header">
+                    <div class="row no-gutters">
+                        <div class="col-10 pb-2">
+                            <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            onchange="selectNode([value]);"
+                            id="select-node"
+                            placeholder="Select node..."
+                            >
+                                <option selected>Select a Node by ID</option>
+                                
+                                    <option value="D'Agostino Giovanna">D'Agostino Giovanna</option>
+                                
+                                    <option value="Policriti Alberto">Policriti Alberto</option>
+                                
+                                    <option value="Maddalena Eddy">Maddalena Eddy</option>
+                                
+                                    <option value="Mizzaro Stefano">Mizzaro Stefano</option>
+                                
+                                    <option value="Roitero Kevin">Roitero Kevin</option>
+                                
+                                    <option value="Coppola Paolo">Coppola Paolo</option>
+                                
+                                    <option value="Della Mea Vincenzo">Della Mea Vincenzo</option>
+                                
+                                    <option value="Lenisa Marina">Lenisa Marina</option>
+                                
+                                    <option value="Scagnetto Ivan">Scagnetto Ivan</option>
+                                
+                                    <option value="Geatti Luca">Geatti Luca</option>
+                                
+                                    <option value="Montanari Angelo">Montanari Angelo</option>
+                                
+                                    <option value="Buttussi Fabio">Buttussi Fabio</option>
+                                
+                                    <option value="Chittaro Luca">Chittaro Luca</option>
+                                
+                                    <option value="Bozzo Enrico">Bozzo Enrico</option>
+                                
+                                    <option value="Fontana Federico">Fontana Federico</option>
+                                
+                                    <option value="Dovier Agostino">Dovier Agostino</option>
+                                
+                                    <option value="Formisano Andrea">Formisano Andrea</option>
+                                
+                                    <option value="Della Monica Dario">Della Monica Dario</option>
+                                
+                                    <option value="Puppis Gabriele">Puppis Gabriele</option>
+                                
+                                    <option value="Miculan Marino">Miculan Marino</option>
+                                
+                                    <option value="Riccio Vincenzo">Riccio Vincenzo</option>
+                                
+                                    <option value="Comini Marco">Comini Marco</option>
+                                
+                                    <option value="Piazza Carla">Piazza Carla</option>
+                                
+                                    <option value="Serra Giuseppe">Serra Giuseppe</option>
+                                
+                                    <option value="Cimatti Alessandro">Cimatti Alessandro</option>
+                                
+                                    <option value="Fogolari Federico">Fogolari Federico</option>
+                                
+                                    <option value="Drioli Carlo">Drioli Carlo</option>
+                                
+                                    <option value="Di Gianantonio Pietro">Di Gianantonio Pietro</option>
+                                
+                                    <option value="Brajnik Giorgio">Brajnik Giorgio</option>
+                                
+                                    <option value="Micheloni Christian">Micheloni Christian</option>
+                                
+                                    <option value="Burigat Stefano">Burigat Stefano</option>
+                                
+                                    <option value="Franceschet Massimo">Franceschet Massimo</option>
+                                
+                                    <option value="Fortuna Sara">Fortuna Sara</option>
+                                
+                                    <option value="Omero Paolo">Omero Paolo</option>
+                                
+                                    <option value="Dattolo Antonina">Dattolo Antonina</option>
+                                
+                                    <option value="Fusiello Andrea">Fusiello Andrea</option>
+                                
+                            </select>
+                        </div>
+                        <div class="col-2 pb-2">
+                            <button type="button" class="btn btn-primary btn-block" onclick="neighbourhoodHighlight({nodes: []});">Reset Selection</button>
+                        </div>
+                    </div>
+                </div>
+            
+            
+              <div id="filter-menu" class="card-header">
+                <div class="row no-gutters">
+                  <div class="col-3 pb-2">
+                    <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            onchange="updateFilter(value, 'item')"
+                            id="select-item"
+                        >
+                        <option value="">Select a network item</option>
+                        <option value="edge">edge</option>
+                        <option value="node">node</option>
+                    </select>
+                  </div>
+                  <div class="col-3 pb-2">
+                    <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            onchange="updateFilter(value, 'property')"
+                            id="select-property"
+                        >
+                        <option value="">Select a property...</option>
+                    </select>
+                  </div>
+                  <div class="col-3 pb-2">
+                    <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            id="select-value"
+                        >
+                        <option value="">Select value(s)...</option>
+                    </select>
+                  </div>
+                  <div class="col-1 pb-2">
+                    <button type="button" class="btn btn-primary btn-block" onclick="highlightFilter(filter);">Filter</button>
+                  </div>
+                  <div class="col-2 pb-2">
+                    <button type="button" class="btn btn-primary btn-block" onclick="clearFilter(true)">Reset Selection</button>
+                  </div>
+                </div>
+              </div>
             
             <div id="mynetwork" class="card-body"></div>
         </div>
@@ -78,6 +409,140 @@
               };
 
               
+                  new TomSelect("#select-node",{
+                      create: false,
+                      sortField: {
+                          field: "text",
+                          direction: "asc"
+                      }
+                  });
+              
+
+              
+                  // explicitly using onItemAdd and this function as we need to save multiple values
+                  let updateValueFilter = function() {
+                      return function () {
+                      filter['value'].push(arguments[0])
+                      }
+                  }
+
+                  let valueControl = new TomSelect("#select-value",{
+                      maxItems: null,
+                      valueField: 'id',
+                      labelField: 'title',
+                      searchField: 'title',
+                      create: false,
+                      sortField: {
+                          field: "text",
+                          direction: "asc"
+                      },
+                      onItemAdd: updateValueFilter()
+                  });
+
+                  let addValues = function() {
+                      return function () {
+                          // clear the current value options and add the selected attribute values
+                          // tom-select handles duplicates
+                          let selectedProperty = arguments[0];
+                          valueControl.clear();
+                          valueControl.clearOptions();
+                          filter['value'] = []
+                          if (filter['item'] === 'node') {
+                              for (let each in allNodes) {
+                                  valueControl.addOption({
+                                      id:allNodes[each][selectedProperty],
+                                      title:allNodes[each][selectedProperty]
+                                  })
+                              }
+                          }
+                          else if (filter['item'] === 'edge') {
+                              for (let each in allEdges) {
+                                  valueControl.addOption({
+                                      id:allEdges[each][selectedProperty],
+                                      title:allEdges[each][selectedProperty]
+                                  })
+                              }
+                          }
+                      }
+                  };
+
+                  let propControl = new TomSelect("#select-property",{
+                      valueField: 'id',
+                      labelField: 'title',
+                      searchField: 'title',
+                      create: false,
+                      sortField: {
+                          field: "text",
+                          direction: "asc"
+                      },
+                      onItemAdd: addValues()
+                  });
+
+                  let addProperties = function() {
+                      return function () {
+                          // loops through the selected network item and adds the attributes to dropdown
+                          // tom-select handles duplicates
+                          clearFilter(false)
+                          if (arguments[0] === 'edge') {
+                              for (let each in allEdges) {
+                                  if (allEdges.hasOwnProperty(each)) {
+                                      for (let eachProp in allEdges[each]) {
+                                          if (allEdges[each].hasOwnProperty(eachProp)) {
+                                              propControl.addOption({id: eachProp, title: eachProp})
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                          else if (arguments[0] === 'node') {
+                              for (let each in allNodes) {
+                                  if (allNodes.hasOwnProperty(each)) {
+                                      for (let eachProp in allNodes[each]) {
+                                          if (allNodes[each].hasOwnProperty(eachProp)
+                                              && (eachProp !== 'hidden' && eachProp !== 'savedLabel'
+                                                  && eachProp !== 'hiddenLabel')) {
+                                              propControl.addOption({id: eachProp, title: eachProp})
+
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  };
+
+                  let itemControl = new TomSelect("#select-item",{
+                      create: false,
+                      sortField:{
+                          field: "text",
+                          direction: "asc"
+                      },
+                      onItemAdd: addProperties()
+                  });
+
+                  function clearFilter(reset) {
+                      // utility function to clear all the selected filter options
+                      // if reset is set to true, the existing filter will be removed
+                      // else, only the dropdown options are cleared
+                      propControl.clear();
+                      propControl.clearOptions();
+                      valueControl.clear();
+                      valueControl.clearOptions();
+                      filter = {
+                          item : '',
+                          property : '',
+                          value : []
+                      }
+                      if (reset) {
+                          itemControl.clear();
+                          filterHighlight({nodes: []})
+                      }
+                  }
+
+                  function updateFilter(value, key) {
+                      // key could be 'item' or 'property' and value is as selected in dropdown
+                      filter[key] = value
+                  }
 
               
 
@@ -88,8 +553,8 @@
                   
 
                   // parsing and collecting nodes and edges from the python
-                  nodes = new vis.DataSet([{"group": 0, "id": "Maddalena Eddy", "label": "Maddalena Eddy", "shape": "dot", "title": "Maddalena Eddy\u003cbr\u003eDegree: 0.086\u003cbr\u003eBetweenness: 0.000", "value": 3.428571428571429}, {"group": 0, "id": "Mizzaro Stefano", "label": "Mizzaro Stefano", "shape": "dot", "title": "Mizzaro Stefano\u003cbr\u003eDegree: 0.229\u003cbr\u003eBetweenness: 0.114", "value": 9.142857142857142}, {"group": 0, "id": "Roitero Kevin", "label": "Roitero Kevin", "shape": "dot", "title": "Roitero Kevin\u003cbr\u003eDegree: 0.143\u003cbr\u003eBetweenness: 0.013", "value": 5.7142857142857135}, {"group": 0, "id": "Coppola Paolo", "label": "Coppola Paolo", "shape": "dot", "title": "Coppola Paolo\u003cbr\u003eDegree: 0.143\u003cbr\u003eBetweenness: 0.027", "value": 5.7142857142857135}, {"group": 0, "id": "Della Mea Vincenzo", "label": "Della Mea Vincenzo", "shape": "dot", "title": "Della Mea Vincenzo\u003cbr\u003eDegree: 0.171\u003cbr\u003eBetweenness: 0.060", "value": 6.857142857142858}, {"group": 1, "id": "Lenisa Marina", "label": "Lenisa Marina", "shape": "dot", "title": "Lenisa Marina\u003cbr\u003eDegree: 0.086\u003cbr\u003eBetweenness: 0.000", "value": 3.428571428571429}, {"group": 1, "id": "Scagnetto Ivan", "label": "Scagnetto Ivan", "shape": "dot", "title": "Scagnetto Ivan\u003cbr\u003eDegree: 0.229\u003cbr\u003eBetweenness: 0.218", "value": 9.142857142857142}, {"group": 2, "id": "Geatti Luca", "label": "Geatti Luca", "shape": "dot", "title": "Geatti Luca\u003cbr\u003eDegree: 0.143\u003cbr\u003eBetweenness: 0.104", "value": 5.7142857142857135}, {"group": 2, "id": "Montanari Angelo", "label": "Montanari Angelo", "shape": "dot", "title": "Montanari Angelo\u003cbr\u003eDegree: 0.286\u003cbr\u003eBetweenness: 0.289", "value": 11.428571428571427}, {"group": 3, "id": "Buttussi Fabio", "label": "Buttussi Fabio", "shape": "dot", "title": "Buttussi Fabio\u003cbr\u003eDegree: 0.029\u003cbr\u003eBetweenness: 0.000", "value": 1.1428571428571428}, {"group": 3, "id": "Chittaro Luca", "label": "Chittaro Luca", "shape": "dot", "title": "Chittaro Luca\u003cbr\u003eDegree: 0.171\u003cbr\u003eBetweenness: 0.209", "value": 6.857142857142858}, {"group": 4, "id": "Bozzo Enrico", "label": "Bozzo Enrico", "shape": "dot", "title": "Bozzo Enrico\u003cbr\u003eDegree: 0.057\u003cbr\u003eBetweenness: 0.008", "value": 2.2857142857142856}, {"group": 4, "id": "Fontana Federico", "label": "Fontana Federico", "shape": "dot", "title": "Fontana Federico\u003cbr\u003eDegree: 0.057\u003cbr\u003eBetweenness: 0.003", "value": 2.2857142857142856}, {"group": 5, "id": "Dovier Agostino", "label": "Dovier Agostino", "shape": "dot", "title": "Dovier Agostino\u003cbr\u003eDegree: 0.171\u003cbr\u003eBetweenness: 0.097", "value": 6.857142857142858}, {"group": 5, "id": "Formisano Andrea", "label": "Formisano Andrea", "shape": "dot", "title": "Formisano Andrea\u003cbr\u003eDegree: 0.057\u003cbr\u003eBetweenness: 0.000", "value": 2.2857142857142856}, {"group": 2, "id": "Della Monica Dario", "label": "Della Monica Dario", "shape": "dot", "title": "Della Monica Dario\u003cbr\u003eDegree: 0.086\u003cbr\u003eBetweenness: 0.009", "value": 3.428571428571429}, {"group": 2, "id": "Puppis Gabriele", "label": "Puppis Gabriele", "shape": "dot", "title": "Puppis Gabriele\u003cbr\u003eDegree: 0.086\u003cbr\u003eBetweenness: 0.049", "value": 3.428571428571429}, {"group": 1, "id": "Miculan Marino", "label": "Miculan Marino", "shape": "dot", "title": "Miculan Marino\u003cbr\u003eDegree: 0.171\u003cbr\u003eBetweenness: 0.161", "value": 6.857142857142858}, {"group": 1, "id": "Riccio Vincenzo", "label": "Riccio Vincenzo", "shape": "dot", "title": "Riccio Vincenzo\u003cbr\u003eDegree: 0.029\u003cbr\u003eBetweenness: 0.000", "value": 1.1428571428571428}, {"group": 1, "id": "Comini Marco", "label": "Comini Marco", "shape": "dot", "title": "Comini Marco\u003cbr\u003eDegree: 0.029\u003cbr\u003eBetweenness: 0.000", "value": 1.1428571428571428}, {"group": 5, "id": "Piazza Carla", "label": "Piazza Carla", "shape": "dot", "title": "Piazza Carla\u003cbr\u003eDegree: 0.171\u003cbr\u003eBetweenness: 0.140", "value": 6.857142857142858}, {"group": 0, "id": "Serra Giuseppe", "label": "Serra Giuseppe", "shape": "dot", "title": "Serra Giuseppe\u003cbr\u003eDegree: 0.200\u003cbr\u003eBetweenness: 0.274", "value": 7.999999999999999}, {"group": 2, "id": "Cimatti Alessandro", "label": "Cimatti Alessandro", "shape": "dot", "title": "Cimatti Alessandro\u003cbr\u003eDegree: 0.086\u003cbr\u003eBetweenness: 0.005", "value": 3.428571428571429}, {"group": 5, "id": "Policriti Alberto", "label": "Policriti Alberto", "shape": "dot", "title": "Policriti Alberto\u003cbr\u003eDegree: 0.171\u003cbr\u003eBetweenness: 0.056", "value": 6.857142857142858}, {"group": 5, "id": "Fogolari Federico", "label": "Fogolari Federico", "shape": "dot", "title": "Fogolari Federico\u003cbr\u003eDegree: 0.086\u003cbr\u003eBetweenness: 0.065", "value": 3.428571428571429}, {"group": 1, "id": "Drioli Carlo", "label": "Drioli Carlo", "shape": "dot", "title": "Drioli Carlo\u003cbr\u003eDegree: 0.029\u003cbr\u003eBetweenness: 0.000", "value": 1.1428571428571428}, {"group": 1, "id": "Di Gianantonio Pietro", "label": "Di Gianantonio Pietro", "shape": "dot", "title": "Di Gianantonio Pietro\u003cbr\u003eDegree: 0.086\u003cbr\u003eBetweenness: 0.000", "value": 3.428571428571429}, {"group": 0, "id": "Brajnik Giorgio", "label": "Brajnik Giorgio", "shape": "dot", "title": "Brajnik Giorgio\u003cbr\u003eDegree: 0.086\u003cbr\u003eBetweenness: 0.031", "value": 3.428571428571429}, {"group": 6, "id": "Micheloni Christian", "label": "Micheloni Christian", "shape": "dot", "title": "Micheloni Christian\u003cbr\u003eDegree: 0.057\u003cbr\u003eBetweenness: 0.111", "value": 2.2857142857142856}, {"group": 3, "id": "Burigat Stefano", "label": "Burigat Stefano", "shape": "dot", "title": "Burigat Stefano\u003cbr\u003eDegree: 0.029\u003cbr\u003eBetweenness: 0.000", "value": 1.1428571428571428}, {"group": 2, "id": "Franceschet Massimo", "label": "Franceschet Massimo", "shape": "dot", "title": "Franceschet Massimo\u003cbr\u003eDegree: 0.086\u003cbr\u003eBetweenness: 0.059", "value": 3.428571428571429}, {"group": 5, "id": "Fortuna Sara", "label": "Fortuna Sara", "shape": "dot", "title": "Fortuna Sara\u003cbr\u003eDegree: 0.029\u003cbr\u003eBetweenness: 0.000", "value": 1.1428571428571428}, {"group": 6, "id": "Omero Paolo", "label": "Omero Paolo", "shape": "dot", "title": "Omero Paolo\u003cbr\u003eDegree: 0.057\u003cbr\u003eBetweenness: 0.057", "value": 2.2857142857142856}, {"group": 6, "id": "Dattolo Antonina", "label": "Dattolo Antonina", "shape": "dot", "title": "Dattolo Antonina\u003cbr\u003eDegree: 0.029\u003cbr\u003eBetweenness: 0.000", "value": 1.1428571428571428}, {"group": 5, "id": "Fusiello Andrea", "label": "Fusiello Andrea", "shape": "dot", "title": "Fusiello Andrea\u003cbr\u003eDegree: 0.057\u003cbr\u003eBetweenness: 0.018", "value": 2.2857142857142856}, {"group": 5, "id": "D\u2019Agostino Giovanna", "label": "D\u2019Agostino Giovanna", "shape": "dot", "title": "D\u2019Agostino Giovanna\u003cbr\u003eDegree: 0.057\u003cbr\u003eBetweenness: 0.000", "value": 2.2857142857142856}]);
-                  edges = new vis.DataSet([{"from": "Maddalena Eddy", "to": "Mizzaro Stefano", "value": 20}, {"from": "Maddalena Eddy", "to": "Roitero Kevin", "value": 13}, {"from": "Maddalena Eddy", "to": "Della Mea Vincenzo", "value": 3}, {"from": "Mizzaro Stefano", "to": "Roitero Kevin", "value": 50}, {"from": "Mizzaro Stefano", "to": "Coppola Paolo", "value": 8}, {"from": "Mizzaro Stefano", "to": "Della Mea Vincenzo", "value": 20}, {"from": "Mizzaro Stefano", "to": "Serra Giuseppe", "value": 7}, {"from": "Mizzaro Stefano", "to": "Scagnetto Ivan", "value": 19}, {"from": "Mizzaro Stefano", "to": "Fusiello Andrea", "value": 1}, {"from": "Mizzaro Stefano", "to": "Brajnik Giorgio", "value": 2}, {"from": "Roitero Kevin", "to": "Coppola Paolo", "value": 1}, {"from": "Roitero Kevin", "to": "Della Mea Vincenzo", "value": 16}, {"from": "Roitero Kevin", "to": "Serra Giuseppe", "value": 6}, {"from": "Coppola Paolo", "to": "Della Mea Vincenzo", "value": 6}, {"from": "Coppola Paolo", "to": "Scagnetto Ivan", "value": 4}, {"from": "Coppola Paolo", "to": "Chittaro Luca", "value": 1}, {"from": "Della Mea Vincenzo", "to": "Serra Giuseppe", "value": 3}, {"from": "Della Mea Vincenzo", "to": "Scagnetto Ivan", "value": 4}, {"from": "Lenisa Marina", "to": "Scagnetto Ivan", "value": 9}, {"from": "Lenisa Marina", "to": "Di Gianantonio Pietro", "value": 9}, {"from": "Lenisa Marina", "to": "Miculan Marino", "value": 2}, {"from": "Scagnetto Ivan", "to": "Drioli Carlo", "value": 1}, {"from": "Scagnetto Ivan", "to": "Di Gianantonio Pietro", "value": 2}, {"from": "Scagnetto Ivan", "to": "Miculan Marino", "value": 6}, {"from": "Scagnetto Ivan", "to": "Chittaro Luca", "value": 1}, {"from": "Geatti Luca", "to": "Montanari Angelo", "value": 27}, {"from": "Geatti Luca", "to": "Cimatti Alessandro", "value": 9}, {"from": "Geatti Luca", "to": "Della Monica Dario", "value": 1}, {"from": "Geatti Luca", "to": "Policriti Alberto", "value": 2}, {"from": "Geatti Luca", "to": "Miculan Marino", "value": 1}, {"from": "Montanari Angelo", "to": "Cimatti Alessandro", "value": 8}, {"from": "Montanari Angelo", "to": "Della Monica Dario", "value": 37}, {"from": "Montanari Angelo", "to": "Puppis Gabriele", "value": 12}, {"from": "Montanari Angelo", "to": "Dovier Agostino", "value": 2}, {"from": "Montanari Angelo", "to": "Franceschet Massimo", "value": 10}, {"from": "Montanari Angelo", "to": "Piazza Carla", "value": 4}, {"from": "Montanari Angelo", "to": "Policriti Alberto", "value": 9}, {"from": "Montanari Angelo", "to": "Chittaro Luca", "value": 5}, {"from": "Montanari Angelo", "to": "D\u2019Agostino Giovanna", "value": 1}, {"from": "Buttussi Fabio", "to": "Chittaro Luca", "value": 27}, {"from": "Chittaro Luca", "to": "Burigat Stefano", "value": 20}, {"from": "Chittaro Luca", "to": "Brajnik Giorgio", "value": 1}, {"from": "Bozzo Enrico", "to": "Fontana Federico", "value": 7}, {"from": "Bozzo Enrico", "to": "Franceschet Massimo", "value": 1}, {"from": "Fontana Federico", "to": "Puppis Gabriele", "value": 1}, {"from": "Dovier Agostino", "to": "Formisano Andrea", "value": 37}, {"from": "Dovier Agostino", "to": "Fogolari Federico", "value": 9}, {"from": "Dovier Agostino", "to": "Policriti Alberto", "value": 8}, {"from": "Dovier Agostino", "to": "Piazza Carla", "value": 10}, {"from": "Dovier Agostino", "to": "Fusiello Andrea", "value": 1}, {"from": "Formisano Andrea", "to": "Policriti Alberto", "value": 3}, {"from": "Della Monica Dario", "to": "Puppis Gabriele", "value": 2}, {"from": "Miculan Marino", "to": "Riccio Vincenzo", "value": 2}, {"from": "Miculan Marino", "to": "Comini Marco", "value": 1}, {"from": "Miculan Marino", "to": "Di Gianantonio Pietro", "value": 4}, {"from": "Piazza Carla", "to": "Serra Giuseppe", "value": 1}, {"from": "Piazza Carla", "to": "Policriti Alberto", "value": 23}, {"from": "Piazza Carla", "to": "Cimatti Alessandro", "value": 1}, {"from": "Piazza Carla", "to": "Franceschet Massimo", "value": 3}, {"from": "Serra Giuseppe", "to": "Brajnik Giorgio", "value": 3}, {"from": "Serra Giuseppe", "to": "Fogolari Federico", "value": 1}, {"from": "Serra Giuseppe", "to": "Micheloni Christian", "value": 1}, {"from": "Policriti Alberto", "to": "D\u2019Agostino Giovanna", "value": 1}, {"from": "Fogolari Federico", "to": "Fortuna Sara", "value": 1}, {"from": "Micheloni Christian", "to": "Omero Paolo", "value": 1}, {"from": "Omero Paolo", "to": "Dattolo Antonina", "value": 1}]);
+                  nodes = new vis.DataSet([{"group": 0, "id": "D\u0027Agostino Giovanna", "label": "D\u0027Agostino Giovanna", "shape": "dot", "title": "D\u0027Agostino Giovanna\nDegree: 0.086\nBetweenness: 0.000", "value": 3.428571428571429}, {"group": 0, "id": "Policriti Alberto", "label": "Policriti Alberto", "shape": "dot", "title": "Policriti Alberto\nDegree: 0.171\nBetweenness: 0.051", "value": 6.857142857142858}, {"group": 1, "id": "Maddalena Eddy", "label": "Maddalena Eddy", "shape": "dot", "title": "Maddalena Eddy\nDegree: 0.086\nBetweenness: 0.000", "value": 3.428571428571429}, {"group": 1, "id": "Mizzaro Stefano", "label": "Mizzaro Stefano", "shape": "dot", "title": "Mizzaro Stefano\nDegree: 0.229\nBetweenness: 0.114", "value": 9.142857142857142}, {"group": 1, "id": "Roitero Kevin", "label": "Roitero Kevin", "shape": "dot", "title": "Roitero Kevin\nDegree: 0.143\nBetweenness: 0.013", "value": 5.7142857142857135}, {"group": 1, "id": "Coppola Paolo", "label": "Coppola Paolo", "shape": "dot", "title": "Coppola Paolo\nDegree: 0.143\nBetweenness: 0.027", "value": 5.7142857142857135}, {"group": 1, "id": "Della Mea Vincenzo", "label": "Della Mea Vincenzo", "shape": "dot", "title": "Della Mea Vincenzo\nDegree: 0.171\nBetweenness: 0.060", "value": 6.857142857142858}, {"group": 2, "id": "Lenisa Marina", "label": "Lenisa Marina", "shape": "dot", "title": "Lenisa Marina\nDegree: 0.086\nBetweenness: 0.000", "value": 3.428571428571429}, {"group": 2, "id": "Scagnetto Ivan", "label": "Scagnetto Ivan", "shape": "dot", "title": "Scagnetto Ivan\nDegree: 0.229\nBetweenness: 0.218", "value": 9.142857142857142}, {"group": 3, "id": "Geatti Luca", "label": "Geatti Luca", "shape": "dot", "title": "Geatti Luca\nDegree: 0.171\nBetweenness: 0.109", "value": 6.857142857142858}, {"group": 3, "id": "Montanari Angelo", "label": "Montanari Angelo", "shape": "dot", "title": "Montanari Angelo\nDegree: 0.286\nBetweenness: 0.279", "value": 11.428571428571427}, {"group": 4, "id": "Buttussi Fabio", "label": "Buttussi Fabio", "shape": "dot", "title": "Buttussi Fabio\nDegree: 0.029\nBetweenness: 0.000", "value": 1.1428571428571428}, {"group": 4, "id": "Chittaro Luca", "label": "Chittaro Luca", "shape": "dot", "title": "Chittaro Luca\nDegree: 0.171\nBetweenness: 0.206", "value": 6.857142857142858}, {"group": 5, "id": "Bozzo Enrico", "label": "Bozzo Enrico", "shape": "dot", "title": "Bozzo Enrico\nDegree: 0.057\nBetweenness: 0.008", "value": 2.2857142857142856}, {"group": 5, "id": "Fontana Federico", "label": "Fontana Federico", "shape": "dot", "title": "Fontana Federico\nDegree: 0.057\nBetweenness: 0.003", "value": 2.2857142857142856}, {"group": 0, "id": "Dovier Agostino", "label": "Dovier Agostino", "shape": "dot", "title": "Dovier Agostino\nDegree: 0.171\nBetweenness: 0.097", "value": 6.857142857142858}, {"group": 0, "id": "Formisano Andrea", "label": "Formisano Andrea", "shape": "dot", "title": "Formisano Andrea\nDegree: 0.057\nBetweenness: 0.000", "value": 2.2857142857142856}, {"group": 3, "id": "Della Monica Dario", "label": "Della Monica Dario", "shape": "dot", "title": "Della Monica Dario\nDegree: 0.086\nBetweenness: 0.009", "value": 3.428571428571429}, {"group": 3, "id": "Puppis Gabriele", "label": "Puppis Gabriele", "shape": "dot", "title": "Puppis Gabriele\nDegree: 0.086\nBetweenness: 0.049", "value": 3.428571428571429}, {"group": 2, "id": "Miculan Marino", "label": "Miculan Marino", "shape": "dot", "title": "Miculan Marino\nDegree: 0.171\nBetweenness: 0.165", "value": 6.857142857142858}, {"group": 2, "id": "Riccio Vincenzo", "label": "Riccio Vincenzo", "shape": "dot", "title": "Riccio Vincenzo\nDegree: 0.029\nBetweenness: 0.000", "value": 1.1428571428571428}, {"group": 2, "id": "Comini Marco", "label": "Comini Marco", "shape": "dot", "title": "Comini Marco\nDegree: 0.029\nBetweenness: 0.000", "value": 1.1428571428571428}, {"group": 0, "id": "Piazza Carla", "label": "Piazza Carla", "shape": "dot", "title": "Piazza Carla\nDegree: 0.171\nBetweenness: 0.139", "value": 6.857142857142858}, {"group": 1, "id": "Serra Giuseppe", "label": "Serra Giuseppe", "shape": "dot", "title": "Serra Giuseppe\nDegree: 0.200\nBetweenness: 0.274", "value": 7.999999999999999}, {"group": 3, "id": "Cimatti Alessandro", "label": "Cimatti Alessandro", "shape": "dot", "title": "Cimatti Alessandro\nDegree: 0.086\nBetweenness: 0.005", "value": 3.428571428571429}, {"group": 0, "id": "Fogolari Federico", "label": "Fogolari Federico", "shape": "dot", "title": "Fogolari Federico\nDegree: 0.086\nBetweenness: 0.065", "value": 3.428571428571429}, {"group": 2, "id": "Drioli Carlo", "label": "Drioli Carlo", "shape": "dot", "title": "Drioli Carlo\nDegree: 0.029\nBetweenness: 0.000", "value": 1.1428571428571428}, {"group": 2, "id": "Di Gianantonio Pietro", "label": "Di Gianantonio Pietro", "shape": "dot", "title": "Di Gianantonio Pietro\nDegree: 0.086\nBetweenness: 0.000", "value": 3.428571428571429}, {"group": 1, "id": "Brajnik Giorgio", "label": "Brajnik Giorgio", "shape": "dot", "title": "Brajnik Giorgio\nDegree: 0.086\nBetweenness: 0.031", "value": 3.428571428571429}, {"group": 6, "id": "Micheloni Christian", "label": "Micheloni Christian", "shape": "dot", "title": "Micheloni Christian\nDegree: 0.057\nBetweenness: 0.111", "value": 2.2857142857142856}, {"group": 4, "id": "Burigat Stefano", "label": "Burigat Stefano", "shape": "dot", "title": "Burigat Stefano\nDegree: 0.029\nBetweenness: 0.000", "value": 1.1428571428571428}, {"group": 3, "id": "Franceschet Massimo", "label": "Franceschet Massimo", "shape": "dot", "title": "Franceschet Massimo\nDegree: 0.086\nBetweenness: 0.059", "value": 3.428571428571429}, {"group": 0, "id": "Fortuna Sara", "label": "Fortuna Sara", "shape": "dot", "title": "Fortuna Sara\nDegree: 0.029\nBetweenness: 0.000", "value": 1.1428571428571428}, {"group": 6, "id": "Omero Paolo", "label": "Omero Paolo", "shape": "dot", "title": "Omero Paolo\nDegree: 0.057\nBetweenness: 0.057", "value": 2.2857142857142856}, {"group": 6, "id": "Dattolo Antonina", "label": "Dattolo Antonina", "shape": "dot", "title": "Dattolo Antonina\nDegree: 0.029\nBetweenness: 0.000", "value": 1.1428571428571428}, {"group": 0, "id": "Fusiello Andrea", "label": "Fusiello Andrea", "shape": "dot", "title": "Fusiello Andrea\nDegree: 0.057\nBetweenness: 0.018", "value": 2.2857142857142856}]);
+                  edges = new vis.DataSet([{"from": "D\u0027Agostino Giovanna", "to": "Policriti Alberto", "value": 12}, {"from": "D\u0027Agostino Giovanna", "to": "Geatti Luca", "value": 2}, {"from": "D\u0027Agostino Giovanna", "to": "Montanari Angelo", "value": 2}, {"from": "Policriti Alberto", "to": "Geatti Luca", "value": 2}, {"from": "Policriti Alberto", "to": "Piazza Carla", "value": 23}, {"from": "Policriti Alberto", "to": "Dovier Agostino", "value": 8}, {"from": "Policriti Alberto", "to": "Formisano Andrea", "value": 3}, {"from": "Policriti Alberto", "to": "Montanari Angelo", "value": 9}, {"from": "Maddalena Eddy", "to": "Mizzaro Stefano", "value": 20}, {"from": "Maddalena Eddy", "to": "Roitero Kevin", "value": 13}, {"from": "Maddalena Eddy", "to": "Della Mea Vincenzo", "value": 3}, {"from": "Mizzaro Stefano", "to": "Roitero Kevin", "value": 50}, {"from": "Mizzaro Stefano", "to": "Coppola Paolo", "value": 8}, {"from": "Mizzaro Stefano", "to": "Della Mea Vincenzo", "value": 20}, {"from": "Mizzaro Stefano", "to": "Serra Giuseppe", "value": 7}, {"from": "Mizzaro Stefano", "to": "Scagnetto Ivan", "value": 19}, {"from": "Mizzaro Stefano", "to": "Fusiello Andrea", "value": 1}, {"from": "Mizzaro Stefano", "to": "Brajnik Giorgio", "value": 2}, {"from": "Roitero Kevin", "to": "Coppola Paolo", "value": 1}, {"from": "Roitero Kevin", "to": "Della Mea Vincenzo", "value": 16}, {"from": "Roitero Kevin", "to": "Serra Giuseppe", "value": 6}, {"from": "Coppola Paolo", "to": "Della Mea Vincenzo", "value": 6}, {"from": "Coppola Paolo", "to": "Scagnetto Ivan", "value": 4}, {"from": "Coppola Paolo", "to": "Chittaro Luca", "value": 1}, {"from": "Della Mea Vincenzo", "to": "Serra Giuseppe", "value": 3}, {"from": "Della Mea Vincenzo", "to": "Scagnetto Ivan", "value": 4}, {"from": "Lenisa Marina", "to": "Scagnetto Ivan", "value": 9}, {"from": "Lenisa Marina", "to": "Di Gianantonio Pietro", "value": 9}, {"from": "Lenisa Marina", "to": "Miculan Marino", "value": 2}, {"from": "Scagnetto Ivan", "to": "Drioli Carlo", "value": 1}, {"from": "Scagnetto Ivan", "to": "Di Gianantonio Pietro", "value": 2}, {"from": "Scagnetto Ivan", "to": "Miculan Marino", "value": 6}, {"from": "Scagnetto Ivan", "to": "Chittaro Luca", "value": 1}, {"from": "Geatti Luca", "to": "Montanari Angelo", "value": 27}, {"from": "Geatti Luca", "to": "Cimatti Alessandro", "value": 9}, {"from": "Geatti Luca", "to": "Della Monica Dario", "value": 1}, {"from": "Geatti Luca", "to": "Miculan Marino", "value": 1}, {"from": "Montanari Angelo", "to": "Cimatti Alessandro", "value": 8}, {"from": "Montanari Angelo", "to": "Della Monica Dario", "value": 37}, {"from": "Montanari Angelo", "to": "Puppis Gabriele", "value": 12}, {"from": "Montanari Angelo", "to": "Dovier Agostino", "value": 2}, {"from": "Montanari Angelo", "to": "Franceschet Massimo", "value": 10}, {"from": "Montanari Angelo", "to": "Piazza Carla", "value": 4}, {"from": "Montanari Angelo", "to": "Chittaro Luca", "value": 5}, {"from": "Buttussi Fabio", "to": "Chittaro Luca", "value": 27}, {"from": "Chittaro Luca", "to": "Burigat Stefano", "value": 20}, {"from": "Chittaro Luca", "to": "Brajnik Giorgio", "value": 1}, {"from": "Bozzo Enrico", "to": "Fontana Federico", "value": 7}, {"from": "Bozzo Enrico", "to": "Franceschet Massimo", "value": 1}, {"from": "Fontana Federico", "to": "Puppis Gabriele", "value": 1}, {"from": "Dovier Agostino", "to": "Formisano Andrea", "value": 37}, {"from": "Dovier Agostino", "to": "Fogolari Federico", "value": 9}, {"from": "Dovier Agostino", "to": "Piazza Carla", "value": 10}, {"from": "Dovier Agostino", "to": "Fusiello Andrea", "value": 1}, {"from": "Della Monica Dario", "to": "Puppis Gabriele", "value": 2}, {"from": "Miculan Marino", "to": "Riccio Vincenzo", "value": 2}, {"from": "Miculan Marino", "to": "Comini Marco", "value": 1}, {"from": "Miculan Marino", "to": "Di Gianantonio Pietro", "value": 4}, {"from": "Piazza Carla", "to": "Serra Giuseppe", "value": 1}, {"from": "Piazza Carla", "to": "Cimatti Alessandro", "value": 1}, {"from": "Piazza Carla", "to": "Franceschet Massimo", "value": 3}, {"from": "Serra Giuseppe", "to": "Brajnik Giorgio", "value": 3}, {"from": "Serra Giuseppe", "to": "Fogolari Federico", "value": 1}, {"from": "Serra Giuseppe", "to": "Micheloni Christian", "value": 1}, {"from": "Fogolari Federico", "to": "Fortuna Sara", "value": 1}, {"from": "Micheloni Christian", "to": "Omero Paolo", "value": 1}, {"from": "Omero Paolo", "to": "Dattolo Antonina", "value": 1}]);
 
                   nodeColors = {};
                   allNodes = nodes.get({ returnType: "Object" });
@@ -147,6 +612,8 @@
 
                   
 
+                  
+                    network.on("selectNode", neighbourhoodHighlight);
                   
 
                   
