@@ -1,0 +1,155 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script src="lib/bindings/utils.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 800px;
+                 background-color: white;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#000000", "id": "Roitero Kevin", "label": "Roitero Kevin", "shape": "dot", "size": 18, "title": "informatica | matematica | fisica"}, {"color": "#9B59B6", "id": "Maddalena Eddy", "label": "Maddalena Eddy", "shape": "dot", "size": 16, "title": "informatica | matematica"}, {"color": "#000000", "id": "Mizzaro Stefano", "label": "Mizzaro Stefano", "shape": "dot", "size": 18, "title": "informatica | matematica | fisica"}, {"color": "#9B59B6", "id": "Coppola Paolo", "label": "Coppola Paolo", "shape": "dot", "size": 16, "title": "informatica | matematica"}, {"color": "#000000", "id": "Della Mea Vincenzo", "label": "Della Mea Vincenzo", "shape": "dot", "size": 18, "title": "informatica | matematica | fisica"}, {"color": "#000000", "id": "Serra Giuseppe", "label": "Serra Giuseppe", "shape": "dot", "size": 18, "title": "informatica | matematica | fisica"}, {"color": "#9B59B6", "id": "Scagnetto Ivan", "label": "Scagnetto Ivan", "shape": "dot", "size": 16, "title": "informatica | matematica"}, {"color": "#4A90E2", "id": "Fusiello Andrea", "label": "Fusiello Andrea", "shape": "dot", "size": 14, "title": "informatica"}, {"color": "#9B59B6", "id": "Brajnik Giorgio", "label": "Brajnik Giorgio", "shape": "dot", "size": 16, "title": "informatica | matematica"}, {"color": "#9B59B6", "id": "Chittaro Luca", "label": "Chittaro Luca", "shape": "dot", "size": 16, "title": "informatica | matematica"}, {"color": "#9B59B6", "id": "Lenisa Marina", "label": "Lenisa Marina", "shape": "dot", "size": 16, "title": "informatica | matematica"}, {"color": "#9B59B6", "id": "Di Gianantonio Pietro", "label": "Di Gianantonio Pietro", "shape": "dot", "size": 16, "title": "informatica | matematica"}, {"color": "#9B59B6", "id": "Miculan Marino", "label": "Miculan Marino", "shape": "dot", "size": 16, "title": "informatica | matematica"}, {"color": "#9B59B6", "id": "Drioli Carlo", "label": "Drioli Carlo", "shape": "dot", "size": 16, "title": "informatica | matematica"}, {"color": "#9B59B6", "id": "Geatti Luca", "label": "Geatti Luca", "shape": "dot", "size": 16, "title": "informatica | matematica"}, {"color": "#9B59B6", "id": "Montanari Angelo", "label": "Montanari Angelo", "shape": "dot", "size": 16, "title": "informatica | matematica"}, {"color": "#9B59B6", "id": "Cimatti Alessandro", "label": "Cimatti Alessandro", "shape": "dot", "size": 16, "title": "informatica | matematica"}, {"color": "#9B59B6", "id": "Della Monica Dario", "label": "Della Monica Dario", "shape": "dot", "size": 16, "title": "informatica | matematica"}, {"color": "#9B59B6", "id": "Policriti Alberto", "label": "Policriti Alberto", "shape": "dot", "size": 16, "title": "informatica | matematica"}, {"color": "#9B59B6", "id": "Puppis Gabriele", "label": "Puppis Gabriele", "shape": "dot", "size": 16, "title": "informatica | matematica"}, {"color": "#9B59B6", "id": "Dovier Agostino", "label": "Dovier Agostino", "shape": "dot", "size": 16, "title": "informatica | matematica"}, {"color": "#9B59B6", "id": "Franceschet Massimo", "label": "Franceschet Massimo", "shape": "dot", "size": 16, "title": "informatica | matematica"}, {"color": "#000000", "id": "Piazza Carla", "label": "Piazza Carla", "shape": "dot", "size": 18, "title": "informatica | matematica | fisica"}, {"color": "#9B59B6", "id": "D\u2019Agostino Giovanna", "label": "D\u2019Agostino Giovanna", "shape": "dot", "size": 16, "title": "informatica | matematica"}, {"color": "#9B59B6", "id": "Buttussi Fabio", "label": "Buttussi Fabio", "shape": "dot", "size": 16, "title": "informatica | matematica"}, {"color": "#9B59B6", "id": "Burigat Stefano", "label": "Burigat Stefano", "shape": "dot", "size": 16, "title": "informatica | matematica"}, {"color": "#000000", "id": "Bozzo Enrico", "label": "Bozzo Enrico", "shape": "dot", "size": 18, "title": "informatica | matematica | fisica"}, {"color": "#000000", "id": "Fontana Federico", "label": "Fontana Federico", "shape": "dot", "size": 18, "title": "informatica | matematica | fisica"}, {"color": "#9B59B6", "id": "Formisano Andrea", "label": "Formisano Andrea", "shape": "dot", "size": 16, "title": "informatica | matematica"}, {"color": "#9B59B6", "id": "Fogolari Federico", "label": "Fogolari Federico", "shape": "dot", "size": 16, "title": "informatica | matematica"}, {"color": "#4A90E2", "id": "Riccio Vincenzo", "label": "Riccio Vincenzo", "shape": "dot", "size": 14, "title": "informatica"}, {"color": "#9B59B6", "id": "Comini Marco", "label": "Comini Marco", "shape": "dot", "size": 16, "title": "informatica | matematica"}, {"color": "#9B59B6", "id": "Micheloni Christian", "label": "Micheloni Christian", "shape": "dot", "size": 16, "title": "informatica | matematica"}, {"color": "#4A90E2", "id": "Fortuna Sara", "label": "Fortuna Sara", "shape": "dot", "size": 14, "title": "informatica"}, {"color": "#4A90E2", "id": "Omero Paolo", "label": "Omero Paolo", "shape": "dot", "size": 14, "title": "informatica"}, {"color": "#4A90E2", "id": "Dattolo Antonina", "label": "Dattolo Antonina", "shape": "dot", "size": 14, "title": "informatica"}]);
+                  edges = new vis.DataSet([{"from": "Roitero Kevin", "title": "Weight = 14 | informatica, matematica", "to": "Maddalena Eddy", "value": 14}, {"from": "Roitero Kevin", "title": "Weight = 57 | informatica, matematica, fisica", "to": "Mizzaro Stefano", "value": 57}, {"from": "Roitero Kevin", "title": "Weight = 1 | informatica", "to": "Coppola Paolo", "value": 1}, {"from": "Roitero Kevin", "title": "Weight = 21 | informatica, matematica, fisica", "to": "Della Mea Vincenzo", "value": 21}, {"from": "Roitero Kevin", "title": "Weight = 6 | informatica", "to": "Serra Giuseppe", "value": 6}, {"from": "Maddalena Eddy", "title": "Weight = 22 | informatica, matematica", "to": "Mizzaro Stefano", "value": 22}, {"from": "Maddalena Eddy", "title": "Weight = 3 | informatica", "to": "Della Mea Vincenzo", "value": 3}, {"from": "Mizzaro Stefano", "title": "Weight = 9 | informatica, matematica", "to": "Coppola Paolo", "value": 9}, {"from": "Mizzaro Stefano", "title": "Weight = 24 | informatica, matematica, fisica", "to": "Della Mea Vincenzo", "value": 24}, {"from": "Mizzaro Stefano", "title": "Weight = 7 | informatica", "to": "Serra Giuseppe", "value": 7}, {"from": "Mizzaro Stefano", "title": "Weight = 20 | informatica, matematica", "to": "Scagnetto Ivan", "value": 20}, {"from": "Mizzaro Stefano", "title": "Weight = 1 | informatica", "to": "Fusiello Andrea", "value": 1}, {"from": "Mizzaro Stefano", "title": "Weight = 2 | informatica", "to": "Brajnik Giorgio", "value": 2}, {"from": "Coppola Paolo", "title": "Weight = 7 | informatica, matematica", "to": "Della Mea Vincenzo", "value": 7}, {"from": "Coppola Paolo", "title": "Weight = 4 | informatica", "to": "Scagnetto Ivan", "value": 4}, {"from": "Coppola Paolo", "title": "Weight = 1 | informatica", "to": "Chittaro Luca", "value": 1}, {"from": "Della Mea Vincenzo", "title": "Weight = 3 | informatica", "to": "Serra Giuseppe", "value": 3}, {"from": "Della Mea Vincenzo", "title": "Weight = 4 | informatica", "to": "Scagnetto Ivan", "value": 4}, {"from": "Serra Giuseppe", "title": "Weight = 2 | informatica, fisica", "to": "Piazza Carla", "value": 2}, {"from": "Serra Giuseppe", "title": "Weight = 3 | informatica", "to": "Brajnik Giorgio", "value": 3}, {"from": "Serra Giuseppe", "title": "Weight = 2 | informatica, matematica", "to": "Fogolari Federico", "value": 2}, {"from": "Serra Giuseppe", "title": "Weight = 2 | informatica, matematica", "to": "Micheloni Christian", "value": 2}, {"from": "Scagnetto Ivan", "title": "Weight = 13 | informatica, matematica", "to": "Lenisa Marina", "value": 13}, {"from": "Scagnetto Ivan", "title": "Weight = 2 | informatica, matematica", "to": "Drioli Carlo", "value": 2}, {"from": "Scagnetto Ivan", "title": "Weight = 3 | informatica, matematica", "to": "Di Gianantonio Pietro", "value": 3}, {"from": "Scagnetto Ivan", "title": "Weight = 10 | informatica, matematica", "to": "Miculan Marino", "value": 10}, {"from": "Scagnetto Ivan", "title": "Weight = 1 | informatica", "to": "Chittaro Luca", "value": 1}, {"from": "Fusiello Andrea", "title": "Weight = 1 | informatica", "to": "Dovier Agostino", "value": 1}, {"from": "Brajnik Giorgio", "title": "Weight = 2 | informatica, matematica", "to": "Chittaro Luca", "value": 2}, {"from": "Chittaro Luca", "title": "Weight = 7 | informatica, matematica", "to": "Montanari Angelo", "value": 7}, {"from": "Chittaro Luca", "title": "Weight = 29 | informatica, matematica", "to": "Buttussi Fabio", "value": 29}, {"from": "Chittaro Luca", "title": "Weight = 22 | informatica, matematica", "to": "Burigat Stefano", "value": 22}, {"from": "Lenisa Marina", "title": "Weight = 14 | informatica, matematica", "to": "Di Gianantonio Pietro", "value": 14}, {"from": "Lenisa Marina", "title": "Weight = 4 | informatica, matematica", "to": "Miculan Marino", "value": 4}, {"from": "Di Gianantonio Pietro", "title": "Weight = 8 | informatica, matematica", "to": "Miculan Marino", "value": 8}, {"from": "Miculan Marino", "title": "Weight = 1 | informatica", "to": "Geatti Luca", "value": 1}, {"from": "Miculan Marino", "title": "Weight = 2 | informatica", "to": "Riccio Vincenzo", "value": 2}, {"from": "Miculan Marino", "title": "Weight = 2 | informatica, matematica", "to": "Comini Marco", "value": 2}, {"from": "Geatti Luca", "title": "Weight = 40 | informatica, matematica", "to": "Montanari Angelo", "value": 40}, {"from": "Geatti Luca", "title": "Weight = 17 | informatica, matematica", "to": "Cimatti Alessandro", "value": 17}, {"from": "Geatti Luca", "title": "Weight = 1 | informatica", "to": "Della Monica Dario", "value": 1}, {"from": "Geatti Luca", "title": "Weight = 3 | informatica, matematica", "to": "Policriti Alberto", "value": 3}, {"from": "Montanari Angelo", "title": "Weight = 15 | informatica, matematica", "to": "Cimatti Alessandro", "value": 15}, {"from": "Montanari Angelo", "title": "Weight = 55 | informatica, matematica", "to": "Della Monica Dario", "value": 55}, {"from": "Montanari Angelo", "title": "Weight = 22 | informatica, matematica", "to": "Puppis Gabriele", "value": 22}, {"from": "Montanari Angelo", "title": "Weight = 4 | informatica, matematica", "to": "Dovier Agostino", "value": 4}, {"from": "Montanari Angelo", "title": "Weight = 16 | informatica, matematica", "to": "Franceschet Massimo", "value": 16}, {"from": "Montanari Angelo", "title": "Weight = 6 | informatica, matematica", "to": "Piazza Carla", "value": 6}, {"from": "Montanari Angelo", "title": "Weight = 15 | informatica, matematica", "to": "Policriti Alberto", "value": 15}, {"from": "Montanari Angelo", "title": "Weight = 2 | informatica, matematica", "to": "D\u2019Agostino Giovanna", "value": 2}, {"from": "Cimatti Alessandro", "title": "Weight = 1 | informatica", "to": "Piazza Carla", "value": 1}, {"from": "Della Monica Dario", "title": "Weight = 3 | informatica, matematica", "to": "Puppis Gabriele", "value": 3}, {"from": "Policriti Alberto", "title": "Weight = 14 | informatica, matematica", "to": "Dovier Agostino", "value": 14}, {"from": "Policriti Alberto", "title": "Weight = 4 | informatica, matematica", "to": "Formisano Andrea", "value": 4}, {"from": "Policriti Alberto", "title": "Weight = 41 | informatica, matematica", "to": "Piazza Carla", "value": 41}, {"from": "Policriti Alberto", "title": "Weight = 2 | informatica, matematica", "to": "D\u2019Agostino Giovanna", "value": 2}, {"from": "Puppis Gabriele", "title": "Weight = 1 | informatica", "to": "Fontana Federico", "value": 1}, {"from": "Dovier Agostino", "title": "Weight = 58 | informatica, matematica", "to": "Formisano Andrea", "value": 58}, {"from": "Dovier Agostino", "title": "Weight = 15 | informatica, matematica", "to": "Fogolari Federico", "value": 15}, {"from": "Dovier Agostino", "title": "Weight = 18 | informatica, matematica", "to": "Piazza Carla", "value": 18}, {"from": "Franceschet Massimo", "title": "Weight = 1 | informatica", "to": "Bozzo Enrico", "value": 1}, {"from": "Franceschet Massimo", "title": "Weight = 4 | informatica, matematica", "to": "Piazza Carla", "value": 4}, {"from": "Bozzo Enrico", "title": "Weight = 12 | informatica, matematica, fisica", "to": "Fontana Federico", "value": 12}, {"from": "Fogolari Federico", "title": "Weight = 1 | informatica", "to": "Fortuna Sara", "value": 1}, {"from": "Micheloni Christian", "title": "Weight = 1 | informatica", "to": "Omero Paolo", "value": 1}, {"from": "Omero Paolo", "title": "Weight = 1 | informatica", "to": "Dattolo Antonina", "value": 1}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": false
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>
