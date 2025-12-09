@@ -2,10 +2,207 @@
     <head>
         <meta charset="utf-8">
         
-            <script src="lib/bindings/utils.js"></script>
+            <script>function neighbourhoodHighlight(params) {
+  // console.log("in nieghbourhoodhighlight");
+  allNodes = nodes.get({ returnType: "Object" });
+  // originalNodes = JSON.parse(JSON.stringify(allNodes));
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    highlightActive = true;
+    var i, j;
+    var selectedNode = params.nodes[0];
+    var degrees = 2;
+
+    // mark all nodes as hard to read.
+    for (let nodeId in allNodes) {
+      // nodeColors[nodeId] = allNodes[nodeId].color;
+      allNodes[nodeId].color = "rgba(200,200,200,0.5)";
+      if (allNodes[nodeId].hiddenLabel === undefined) {
+        allNodes[nodeId].hiddenLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+    var connectedNodes = network.getConnectedNodes(selectedNode);
+    var allConnectedNodes = [];
+
+    // get the second degree nodes
+    for (i = 1; i < degrees; i++) {
+      for (j = 0; j < connectedNodes.length; j++) {
+        allConnectedNodes = allConnectedNodes.concat(
+          network.getConnectedNodes(connectedNodes[j])
+        );
+      }
+    }
+
+    // all second degree nodes get a different color and their label back
+    for (i = 0; i < allConnectedNodes.length; i++) {
+      // allNodes[allConnectedNodes[i]].color = "pink";
+      allNodes[allConnectedNodes[i]].color = "rgba(150,150,150,0.75)";
+      if (allNodes[allConnectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[allConnectedNodes[i]].label =
+          allNodes[allConnectedNodes[i]].hiddenLabel;
+        allNodes[allConnectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // all first degree nodes get their own color and their label back
+    for (i = 0; i < connectedNodes.length; i++) {
+      // allNodes[connectedNodes[i]].color = undefined;
+      allNodes[connectedNodes[i]].color = nodeColors[connectedNodes[i]];
+      if (allNodes[connectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[connectedNodes[i]].label =
+          allNodes[connectedNodes[i]].hiddenLabel;
+        allNodes[connectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // the main node gets its own color and its label back.
+    // allNodes[selectedNode].color = undefined;
+    allNodes[selectedNode].color = nodeColors[selectedNode];
+    if (allNodes[selectedNode].hiddenLabel !== undefined) {
+      allNodes[selectedNode].label = allNodes[selectedNode].hiddenLabel;
+      allNodes[selectedNode].hiddenLabel = undefined;
+    }
+  } else if (highlightActive === true) {
+    // console.log("highlightActive was true");
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      // allNodes[nodeId].color = "purple";
+      allNodes[nodeId].color = nodeColors[nodeId];
+      // delete allNodes[nodeId].color;
+      if (allNodes[nodeId].hiddenLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].hiddenLabel;
+        allNodes[nodeId].hiddenLabel = undefined;
+      }
+    }
+    highlightActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    // console.log("Nothing was selected");
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        // allNodes[nodeId].color = {};
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function filterHighlight(params) {
+  allNodes = nodes.get({ returnType: "Object" });
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    filterActive = true;
+    let selectedNodes = params.nodes;
+
+    // hiding all nodes and saving the label
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = true;
+      if (allNodes[nodeId].savedLabel === undefined) {
+        allNodes[nodeId].savedLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+
+    for (let i=0; i < selectedNodes.length; i++) {
+      allNodes[selectedNodes[i]].hidden = false;
+      if (allNodes[selectedNodes[i]].savedLabel !== undefined) {
+        allNodes[selectedNodes[i]].label = allNodes[selectedNodes[i]].savedLabel;
+        allNodes[selectedNodes[i]].savedLabel = undefined;
+      }
+    }
+
+  } else if (filterActive === true) {
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = false;
+      if (allNodes[nodeId].savedLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].savedLabel;
+        allNodes[nodeId].savedLabel = undefined;
+      }
+    }
+    filterActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function selectNode(nodes) {
+  network.selectNodes(nodes);
+  neighbourhoodHighlight({ nodes: nodes });
+  return nodes;
+}
+
+function selectNodes(nodes) {
+  network.selectNodes(nodes);
+  filterHighlight({nodes: nodes});
+  return nodes;
+}
+
+function highlightFilter(filter) {
+  let selectedNodes = []
+  let selectedProp = filter['property']
+  if (filter['item'] === 'node') {
+    let allNodes = nodes.get({ returnType: "Object" });
+    for (let nodeId in allNodes) {
+      if (allNodes[nodeId][selectedProp] && filter['value'].includes((allNodes[nodeId][selectedProp]).toString())) {
+        selectedNodes.push(nodeId)
+      }
+    }
+  }
+  else if (filter['item'] === 'edge'){
+    let allEdges = edges.get({returnType: 'object'});
+    // check if the selected property exists for selected edge and select the nodes connected to the edge
+    for (let edge in allEdges) {
+      if (allEdges[edge][selectedProp] && filter['value'].includes((allEdges[edge][selectedProp]).toString())) {
+        selectedNodes.push(allEdges[edge]['from'])
+        selectedNodes.push(allEdges[edge]['to'])
+      }
+    }
+  }
+  selectNodes(selectedNodes)
+}</script>
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
             <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
             
+            
+            
+            
+            
+            
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.0.0-rc.4/css/tom-select.min.css" integrity="sha512-43fHB3GLgZfz8QXl1RPQ8O66oIgv3po9cJ5erMt1c4QISq9dYb195T3vr5ImnJPXuVroKcGBPXBFKETW8jrPNQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.0.0-rc.4/js/tom-select.complete.js" integrity="sha512-jeF9CfnvzDiw9G9xiksVjxR2lib44Gnovvkv+3CgCG6NXCD4gqlA5nDAVW5WjpA+i+/zKsUWV5xNEbW1X/HH0Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+
         
 <center>
 <h1></h1>
@@ -34,7 +231,7 @@
              #mynetwork {
                  width: 100%;
                  height: 750px;
-                 background-color: #ffffff;
+                 background-color: black;
                  border: 1px solid lightgray;
                  position: relative;
                  float: left;
@@ -52,6 +249,48 @@
     <body>
         <div class="card" style="width: 100%">
             
+            
+              <div id="filter-menu" class="card-header">
+                <div class="row no-gutters">
+                  <div class="col-3 pb-2">
+                    <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            onchange="updateFilter(value, 'item')"
+                            id="select-item"
+                        >
+                        <option value="">Select a network item</option>
+                        <option value="edge">edge</option>
+                        <option value="node">node</option>
+                    </select>
+                  </div>
+                  <div class="col-3 pb-2">
+                    <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            onchange="updateFilter(value, 'property')"
+                            id="select-property"
+                        >
+                        <option value="">Select a property...</option>
+                    </select>
+                  </div>
+                  <div class="col-3 pb-2">
+                    <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            id="select-value"
+                        >
+                        <option value="">Select value(s)...</option>
+                    </select>
+                  </div>
+                  <div class="col-1 pb-2">
+                    <button type="button" class="btn btn-primary btn-block" onclick="highlightFilter(filter);">Filter</button>
+                  </div>
+                  <div class="col-2 pb-2">
+                    <button type="button" class="btn btn-primary btn-block" onclick="clearFilter(true)">Reset Selection</button>
+                  </div>
+                </div>
+              </div>
             
             <div id="mynetwork" class="card-body"></div>
         </div>
@@ -80,6 +319,132 @@
               
 
               
+                  // explicitly using onItemAdd and this function as we need to save multiple values
+                  let updateValueFilter = function() {
+                      return function () {
+                      filter['value'].push(arguments[0])
+                      }
+                  }
+
+                  let valueControl = new TomSelect("#select-value",{
+                      maxItems: null,
+                      valueField: 'id',
+                      labelField: 'title',
+                      searchField: 'title',
+                      create: false,
+                      sortField: {
+                          field: "text",
+                          direction: "asc"
+                      },
+                      onItemAdd: updateValueFilter()
+                  });
+
+                  let addValues = function() {
+                      return function () {
+                          // clear the current value options and add the selected attribute values
+                          // tom-select handles duplicates
+                          let selectedProperty = arguments[0];
+                          valueControl.clear();
+                          valueControl.clearOptions();
+                          filter['value'] = []
+                          if (filter['item'] === 'node') {
+                              for (let each in allNodes) {
+                                  valueControl.addOption({
+                                      id:allNodes[each][selectedProperty],
+                                      title:allNodes[each][selectedProperty]
+                                  })
+                              }
+                          }
+                          else if (filter['item'] === 'edge') {
+                              for (let each in allEdges) {
+                                  valueControl.addOption({
+                                      id:allEdges[each][selectedProperty],
+                                      title:allEdges[each][selectedProperty]
+                                  })
+                              }
+                          }
+                      }
+                  };
+
+                  let propControl = new TomSelect("#select-property",{
+                      valueField: 'id',
+                      labelField: 'title',
+                      searchField: 'title',
+                      create: false,
+                      sortField: {
+                          field: "text",
+                          direction: "asc"
+                      },
+                      onItemAdd: addValues()
+                  });
+
+                  let addProperties = function() {
+                      return function () {
+                          // loops through the selected network item and adds the attributes to dropdown
+                          // tom-select handles duplicates
+                          clearFilter(false)
+                          if (arguments[0] === 'edge') {
+                              for (let each in allEdges) {
+                                  if (allEdges.hasOwnProperty(each)) {
+                                      for (let eachProp in allEdges[each]) {
+                                          if (allEdges[each].hasOwnProperty(eachProp)) {
+                                              propControl.addOption({id: eachProp, title: eachProp})
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                          else if (arguments[0] === 'node') {
+                              for (let each in allNodes) {
+                                  if (allNodes.hasOwnProperty(each)) {
+                                      for (let eachProp in allNodes[each]) {
+                                          if (allNodes[each].hasOwnProperty(eachProp)
+                                              && (eachProp !== 'hidden' && eachProp !== 'savedLabel'
+                                                  && eachProp !== 'hiddenLabel')) {
+                                              propControl.addOption({id: eachProp, title: eachProp})
+
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  };
+
+                  let itemControl = new TomSelect("#select-item",{
+                      create: false,
+                      sortField:{
+                          field: "text",
+                          direction: "asc"
+                      },
+                      onItemAdd: addProperties()
+                  });
+
+                  function clearFilter(reset) {
+                      // utility function to clear all the selected filter options
+                      // if reset is set to true, the existing filter will be removed
+                      // else, only the dropdown options are cleared
+                      propControl.clear();
+                      propControl.clearOptions();
+                      valueControl.clear();
+                      valueControl.clearOptions();
+                      filter = {
+                          item : '',
+                          property : '',
+                          value : []
+                      }
+                      if (reset) {
+                          itemControl.clear();
+                          filterHighlight({nodes: []})
+                      }
+                  }
+
+                  function updateFilter(value, key) {
+                      // key could be 'item' or 'property' and value is as selected in dropdown
+                      filter[key] = value
+                  }
+
+              
 
               // This method is responsible for drawing the graph, returns the drawn network
               function drawGraph() {
@@ -88,7 +453,7 @@
                   
 
                   // parsing and collecting nodes and edges from the python
-                  nodes = new vis.DataSet([{"color": "#4A90E2", "font": {"color": "black"}, "id": "Roitero Kevin", "label": "Roitero Kevin", "shape": "dot", "size": 15, "title": "Roitero Kevin"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Maddalena Eddy", "label": "Maddalena Eddy", "shape": "dot", "size": 15, "title": "Maddalena Eddy"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Mizzaro Stefano", "label": "Mizzaro Stefano", "shape": "dot", "size": 15, "title": "Mizzaro Stefano"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Coppola Paolo", "label": "Coppola Paolo", "shape": "dot", "size": 15, "title": "Coppola Paolo"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Della Mea Vincenzo", "label": "Della Mea Vincenzo", "shape": "dot", "size": 15, "title": "Della Mea Vincenzo"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Lenisa Marina", "label": "Lenisa Marina", "shape": "dot", "size": 15, "title": "Lenisa Marina"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Scagnetto Ivan", "label": "Scagnetto Ivan", "shape": "dot", "size": 15, "title": "Scagnetto Ivan"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Geatti Luca", "label": "Geatti Luca", "shape": "dot", "size": 15, "title": "Geatti Luca"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Montanari Angelo", "label": "Montanari Angelo", "shape": "dot", "size": 15, "title": "Montanari Angelo"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Buttussi Fabio", "label": "Buttussi Fabio", "shape": "dot", "size": 15, "title": "Buttussi Fabio"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Chittaro Luca", "label": "Chittaro Luca", "shape": "dot", "size": 15, "title": "Chittaro Luca"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Bozzo Enrico", "label": "Bozzo Enrico", "shape": "dot", "size": 15, "title": "Bozzo Enrico"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Fontana Federico", "label": "Fontana Federico", "shape": "dot", "size": 15, "title": "Fontana Federico"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Dovier Agostino", "label": "Dovier Agostino", "shape": "dot", "size": 15, "title": "Dovier Agostino"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Formisano Andrea", "label": "Formisano Andrea", "shape": "dot", "size": 15, "title": "Formisano Andrea"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Della Monica Dario", "label": "Della Monica Dario", "shape": "dot", "size": 15, "title": "Della Monica Dario"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Puppis Gabriele", "label": "Puppis Gabriele", "shape": "dot", "size": 15, "title": "Puppis Gabriele"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Miculan Marino", "label": "Miculan Marino", "shape": "dot", "size": 15, "title": "Miculan Marino"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Riccio Vincenzo", "label": "Riccio Vincenzo", "shape": "dot", "size": 15, "title": "Riccio Vincenzo"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Comini Marco", "label": "Comini Marco", "shape": "dot", "size": 15, "title": "Comini Marco"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Serra Giuseppe", "label": "Serra Giuseppe", "shape": "dot", "size": 15, "title": "Serra Giuseppe"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Piazza Carla", "label": "Piazza Carla", "shape": "dot", "size": 15, "title": "Piazza Carla"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Cimatti Alessandro", "label": "Cimatti Alessandro", "shape": "dot", "size": 15, "title": "Cimatti Alessandro"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Policriti Alberto", "label": "Policriti Alberto", "shape": "dot", "size": 15, "title": "Policriti Alberto"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Fogolari Federico", "label": "Fogolari Federico", "shape": "dot", "size": 15, "title": "Fogolari Federico"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Drioli Carlo", "label": "Drioli Carlo", "shape": "dot", "size": 15, "title": "Drioli Carlo"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Di Gianantonio Pietro", "label": "Di Gianantonio Pietro", "shape": "dot", "size": 15, "title": "Di Gianantonio Pietro"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Brajnik Giorgio", "label": "Brajnik Giorgio", "shape": "dot", "size": 15, "title": "Brajnik Giorgio"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Micheloni Christian", "label": "Micheloni Christian", "shape": "dot", "size": 15, "title": "Micheloni Christian"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Burigat Stefano", "label": "Burigat Stefano", "shape": "dot", "size": 15, "title": "Burigat Stefano"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Franceschet Massimo", "label": "Franceschet Massimo", "shape": "dot", "size": 15, "title": "Franceschet Massimo"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Fortuna Sara", "label": "Fortuna Sara", "shape": "dot", "size": 15, "title": "Fortuna Sara"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Omero Paolo", "label": "Omero Paolo", "shape": "dot", "size": 15, "title": "Omero Paolo"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Dattolo Antonina", "label": "Dattolo Antonina", "shape": "dot", "size": 15, "title": "Dattolo Antonina"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "Fusiello Andrea", "label": "Fusiello Andrea", "shape": "dot", "size": 15, "title": "Fusiello Andrea"}, {"color": "#4A90E2", "font": {"color": "black"}, "id": "D\u2019Agostino Giovanna", "label": "D\u2019Agostino Giovanna", "shape": "dot", "size": 15, "title": "D\u2019Agostino Giovanna"}]);
+                  nodes = new vis.DataSet([{"color": "#4A90E2", "font": {"color": "white"}, "id": "Roitero Kevin", "label": "Roitero Kevin", "shape": "dot", "size": 15, "title": "Roitero Kevin"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Maddalena Eddy", "label": "Maddalena Eddy", "shape": "dot", "size": 15, "title": "Maddalena Eddy"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Mizzaro Stefano", "label": "Mizzaro Stefano", "shape": "dot", "size": 15, "title": "Mizzaro Stefano"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Coppola Paolo", "label": "Coppola Paolo", "shape": "dot", "size": 15, "title": "Coppola Paolo"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Della Mea Vincenzo", "label": "Della Mea Vincenzo", "shape": "dot", "size": 15, "title": "Della Mea Vincenzo"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Lenisa Marina", "label": "Lenisa Marina", "shape": "dot", "size": 15, "title": "Lenisa Marina"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Scagnetto Ivan", "label": "Scagnetto Ivan", "shape": "dot", "size": 15, "title": "Scagnetto Ivan"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Geatti Luca", "label": "Geatti Luca", "shape": "dot", "size": 15, "title": "Geatti Luca"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Montanari Angelo", "label": "Montanari Angelo", "shape": "dot", "size": 15, "title": "Montanari Angelo"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Buttussi Fabio", "label": "Buttussi Fabio", "shape": "dot", "size": 15, "title": "Buttussi Fabio"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Chittaro Luca", "label": "Chittaro Luca", "shape": "dot", "size": 15, "title": "Chittaro Luca"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Bozzo Enrico", "label": "Bozzo Enrico", "shape": "dot", "size": 15, "title": "Bozzo Enrico"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Fontana Federico", "label": "Fontana Federico", "shape": "dot", "size": 15, "title": "Fontana Federico"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Dovier Agostino", "label": "Dovier Agostino", "shape": "dot", "size": 15, "title": "Dovier Agostino"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Formisano Andrea", "label": "Formisano Andrea", "shape": "dot", "size": 15, "title": "Formisano Andrea"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Della Monica Dario", "label": "Della Monica Dario", "shape": "dot", "size": 15, "title": "Della Monica Dario"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Puppis Gabriele", "label": "Puppis Gabriele", "shape": "dot", "size": 15, "title": "Puppis Gabriele"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Miculan Marino", "label": "Miculan Marino", "shape": "dot", "size": 15, "title": "Miculan Marino"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Riccio Vincenzo", "label": "Riccio Vincenzo", "shape": "dot", "size": 15, "title": "Riccio Vincenzo"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Comini Marco", "label": "Comini Marco", "shape": "dot", "size": 15, "title": "Comini Marco"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Serra Giuseppe", "label": "Serra Giuseppe", "shape": "dot", "size": 15, "title": "Serra Giuseppe"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Piazza Carla", "label": "Piazza Carla", "shape": "dot", "size": 15, "title": "Piazza Carla"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Cimatti Alessandro", "label": "Cimatti Alessandro", "shape": "dot", "size": 15, "title": "Cimatti Alessandro"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Policriti Alberto", "label": "Policriti Alberto", "shape": "dot", "size": 15, "title": "Policriti Alberto"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Fogolari Federico", "label": "Fogolari Federico", "shape": "dot", "size": 15, "title": "Fogolari Federico"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Drioli Carlo", "label": "Drioli Carlo", "shape": "dot", "size": 15, "title": "Drioli Carlo"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Di Gianantonio Pietro", "label": "Di Gianantonio Pietro", "shape": "dot", "size": 15, "title": "Di Gianantonio Pietro"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Brajnik Giorgio", "label": "Brajnik Giorgio", "shape": "dot", "size": 15, "title": "Brajnik Giorgio"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Micheloni Christian", "label": "Micheloni Christian", "shape": "dot", "size": 15, "title": "Micheloni Christian"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Burigat Stefano", "label": "Burigat Stefano", "shape": "dot", "size": 15, "title": "Burigat Stefano"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Franceschet Massimo", "label": "Franceschet Massimo", "shape": "dot", "size": 15, "title": "Franceschet Massimo"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Fortuna Sara", "label": "Fortuna Sara", "shape": "dot", "size": 15, "title": "Fortuna Sara"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Omero Paolo", "label": "Omero Paolo", "shape": "dot", "size": 15, "title": "Omero Paolo"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Dattolo Antonina", "label": "Dattolo Antonina", "shape": "dot", "size": 15, "title": "Dattolo Antonina"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "Fusiello Andrea", "label": "Fusiello Andrea", "shape": "dot", "size": 15, "title": "Fusiello Andrea"}, {"color": "#4A90E2", "font": {"color": "white"}, "id": "D\u2019Agostino Giovanna", "label": "D\u2019Agostino Giovanna", "shape": "dot", "size": 15, "title": "D\u2019Agostino Giovanna"}]);
                   edges = new vis.DataSet([{"from": "Roitero Kevin", "title": "Co-authored papers: 13", "to": "Maddalena Eddy", "value": 13}, {"from": "Roitero Kevin", "title": "Co-authored papers: 50", "to": "Mizzaro Stefano", "value": 50}, {"from": "Roitero Kevin", "title": "Co-authored papers: 1", "to": "Coppola Paolo", "value": 1}, {"from": "Roitero Kevin", "title": "Co-authored papers: 16", "to": "Della Mea Vincenzo", "value": 16}, {"from": "Roitero Kevin", "title": "Co-authored papers: 6", "to": "Serra Giuseppe", "value": 6}, {"from": "Maddalena Eddy", "title": "Co-authored papers: 20", "to": "Mizzaro Stefano", "value": 20}, {"from": "Maddalena Eddy", "title": "Co-authored papers: 3", "to": "Della Mea Vincenzo", "value": 3}, {"from": "Mizzaro Stefano", "title": "Co-authored papers: 8", "to": "Coppola Paolo", "value": 8}, {"from": "Mizzaro Stefano", "title": "Co-authored papers: 20", "to": "Della Mea Vincenzo", "value": 20}, {"from": "Mizzaro Stefano", "title": "Co-authored papers: 7", "to": "Serra Giuseppe", "value": 7}, {"from": "Mizzaro Stefano", "title": "Co-authored papers: 19", "to": "Scagnetto Ivan", "value": 19}, {"from": "Mizzaro Stefano", "title": "Co-authored papers: 1", "to": "Fusiello Andrea", "value": 1}, {"from": "Mizzaro Stefano", "title": "Co-authored papers: 2", "to": "Brajnik Giorgio", "value": 2}, {"from": "Coppola Paolo", "title": "Co-authored papers: 6", "to": "Della Mea Vincenzo", "value": 6}, {"from": "Coppola Paolo", "title": "Co-authored papers: 4", "to": "Scagnetto Ivan", "value": 4}, {"from": "Coppola Paolo", "title": "Co-authored papers: 1", "to": "Chittaro Luca", "value": 1}, {"from": "Della Mea Vincenzo", "title": "Co-authored papers: 3", "to": "Serra Giuseppe", "value": 3}, {"from": "Della Mea Vincenzo", "title": "Co-authored papers: 4", "to": "Scagnetto Ivan", "value": 4}, {"from": "Lenisa Marina", "title": "Co-authored papers: 9", "to": "Scagnetto Ivan", "value": 9}, {"from": "Lenisa Marina", "title": "Co-authored papers: 9", "to": "Di Gianantonio Pietro", "value": 9}, {"from": "Lenisa Marina", "title": "Co-authored papers: 2", "to": "Miculan Marino", "value": 2}, {"from": "Scagnetto Ivan", "title": "Co-authored papers: 1", "to": "Drioli Carlo", "value": 1}, {"from": "Scagnetto Ivan", "title": "Co-authored papers: 2", "to": "Di Gianantonio Pietro", "value": 2}, {"from": "Scagnetto Ivan", "title": "Co-authored papers: 6", "to": "Miculan Marino", "value": 6}, {"from": "Scagnetto Ivan", "title": "Co-authored papers: 1", "to": "Chittaro Luca", "value": 1}, {"from": "Geatti Luca", "title": "Co-authored papers: 27", "to": "Montanari Angelo", "value": 27}, {"from": "Geatti Luca", "title": "Co-authored papers: 9", "to": "Cimatti Alessandro", "value": 9}, {"from": "Geatti Luca", "title": "Co-authored papers: 1", "to": "Della Monica Dario", "value": 1}, {"from": "Geatti Luca", "title": "Co-authored papers: 2", "to": "Policriti Alberto", "value": 2}, {"from": "Geatti Luca", "title": "Co-authored papers: 1", "to": "Miculan Marino", "value": 1}, {"from": "Montanari Angelo", "title": "Co-authored papers: 8", "to": "Cimatti Alessandro", "value": 8}, {"from": "Montanari Angelo", "title": "Co-authored papers: 37", "to": "Della Monica Dario", "value": 37}, {"from": "Montanari Angelo", "title": "Co-authored papers: 12", "to": "Puppis Gabriele", "value": 12}, {"from": "Montanari Angelo", "title": "Co-authored papers: 2", "to": "Dovier Agostino", "value": 2}, {"from": "Montanari Angelo", "title": "Co-authored papers: 10", "to": "Franceschet Massimo", "value": 10}, {"from": "Montanari Angelo", "title": "Co-authored papers: 4", "to": "Piazza Carla", "value": 4}, {"from": "Montanari Angelo", "title": "Co-authored papers: 9", "to": "Policriti Alberto", "value": 9}, {"from": "Montanari Angelo", "title": "Co-authored papers: 5", "to": "Chittaro Luca", "value": 5}, {"from": "Montanari Angelo", "title": "Co-authored papers: 1", "to": "D\u2019Agostino Giovanna", "value": 1}, {"from": "Buttussi Fabio", "title": "Co-authored papers: 27", "to": "Chittaro Luca", "value": 27}, {"from": "Chittaro Luca", "title": "Co-authored papers: 20", "to": "Burigat Stefano", "value": 20}, {"from": "Chittaro Luca", "title": "Co-authored papers: 1", "to": "Brajnik Giorgio", "value": 1}, {"from": "Bozzo Enrico", "title": "Co-authored papers: 7", "to": "Fontana Federico", "value": 7}, {"from": "Bozzo Enrico", "title": "Co-authored papers: 1", "to": "Franceschet Massimo", "value": 1}, {"from": "Fontana Federico", "title": "Co-authored papers: 1", "to": "Puppis Gabriele", "value": 1}, {"from": "Dovier Agostino", "title": "Co-authored papers: 37", "to": "Formisano Andrea", "value": 37}, {"from": "Dovier Agostino", "title": "Co-authored papers: 9", "to": "Fogolari Federico", "value": 9}, {"from": "Dovier Agostino", "title": "Co-authored papers: 8", "to": "Policriti Alberto", "value": 8}, {"from": "Dovier Agostino", "title": "Co-authored papers: 10", "to": "Piazza Carla", "value": 10}, {"from": "Dovier Agostino", "title": "Co-authored papers: 1", "to": "Fusiello Andrea", "value": 1}, {"from": "Formisano Andrea", "title": "Co-authored papers: 3", "to": "Policriti Alberto", "value": 3}, {"from": "Della Monica Dario", "title": "Co-authored papers: 2", "to": "Puppis Gabriele", "value": 2}, {"from": "Miculan Marino", "title": "Co-authored papers: 2", "to": "Riccio Vincenzo", "value": 2}, {"from": "Miculan Marino", "title": "Co-authored papers: 1", "to": "Comini Marco", "value": 1}, {"from": "Miculan Marino", "title": "Co-authored papers: 4", "to": "Di Gianantonio Pietro", "value": 4}, {"from": "Serra Giuseppe", "title": "Co-authored papers: 1", "to": "Piazza Carla", "value": 1}, {"from": "Serra Giuseppe", "title": "Co-authored papers: 3", "to": "Brajnik Giorgio", "value": 3}, {"from": "Serra Giuseppe", "title": "Co-authored papers: 1", "to": "Fogolari Federico", "value": 1}, {"from": "Serra Giuseppe", "title": "Co-authored papers: 1", "to": "Micheloni Christian", "value": 1}, {"from": "Piazza Carla", "title": "Co-authored papers: 23", "to": "Policriti Alberto", "value": 23}, {"from": "Piazza Carla", "title": "Co-authored papers: 1", "to": "Cimatti Alessandro", "value": 1}, {"from": "Piazza Carla", "title": "Co-authored papers: 3", "to": "Franceschet Massimo", "value": 3}, {"from": "Policriti Alberto", "title": "Co-authored papers: 1", "to": "D\u2019Agostino Giovanna", "value": 1}, {"from": "Fogolari Federico", "title": "Co-authored papers: 1", "to": "Fortuna Sara", "value": 1}, {"from": "Micheloni Christian", "title": "Co-authored papers: 1", "to": "Omero Paolo", "value": 1}, {"from": "Omero Paolo", "title": "Co-authored papers: 1", "to": "Dattolo Antonina", "value": 1}]);
 
                   nodeColors = {};
